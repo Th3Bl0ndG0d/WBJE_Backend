@@ -1,5 +1,6 @@
 package nl.avflexologic.wbje.controllers;
 
+import jakarta.validation.Valid;
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
 import nl.avflexologic.wbje.services.JobService;
@@ -23,7 +24,7 @@ public class JobController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public JobResponseDTO createJob(@RequestBody JobRequestDTO request) {
+    public JobResponseDTO createJob(@Valid @RequestBody JobRequestDTO request) {
         return jobService.createJob(request);
     }
 

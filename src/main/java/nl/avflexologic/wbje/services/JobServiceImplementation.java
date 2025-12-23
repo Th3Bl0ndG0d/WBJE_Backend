@@ -3,6 +3,8 @@ package nl.avflexologic.wbje.services;
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
 import nl.avflexologic.wbje.entities.JobEntity;
+import nl.avflexologic.wbje.exceptions.JobNotFoundException;
+import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.JobDTOMapper;
 import nl.avflexologic.wbje.repositories.JobRepository;
 import org.springframework.stereotype.Service;
@@ -19,7 +21,10 @@ public class JobServiceImplementation implements JobService {
 
     @Override
     public JobResponseDTO createJob(JobRequestDTO request) {
-        validateRequest(request);
+        //Validate and trow exception
+        if (request == null || request.jobDate == null) {
+            throw new IllegalArgumentException("Job request must not be null.");
+        }
 
         JobEntity entity = JobDTOMapper.toEntity(request);
         JobEntity saved = jobRepository.save(entity);
@@ -29,14 +34,17 @@ public class JobServiceImplementation implements JobService {
 
     @Override
     public JobResponseDTO getJobById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Job id is required.");
-        }
-
-        Optional<JobEntity> result = jobRepository.findById(id);
-        JobEntity entity = result.orElseThrow(() -> new IllegalArgumentException("Job not found for id: " + id));
-
-        return JobDTOMapper.toDto(entity);
+//        if (id == null) {
+//            throw new IllegalArgumentException("Job id is required.");
+//        }
+//
+//        Optional<JobEntity> result = jobRepository.findById(id);
+//        JobEntity entity = result.orElseThrow(() -> new JobNotFoundException(id));
+//
+//        return JobDTOMapper.toDto(entity);
+        return jobRepository.findById(id)
+                .map(JobDTOMapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found for id: " + id));
     }
 
     /**

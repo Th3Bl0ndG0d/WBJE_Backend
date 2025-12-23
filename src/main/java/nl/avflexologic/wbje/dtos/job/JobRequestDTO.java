@@ -3,18 +3,20 @@ package nl.avflexologic.wbje.dtos.job;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
-
+import jakarta.validation.constraints.Size;
 /**
  * Inkomend contract voor het aanmaken en bijwerken van een Job.
  */
 public class JobRequestDTO {
+    @Size(max = 40, message = "jobNumber must not exceed 40 characters.")
     public String jobNumber;
-    @NotNull
+//    @NotNull(message = "jobDate is required.")
     public LocalDateTime jobDate;
+    @Size(max = 255, message = "jobName must not exceed 255 characters.")
     public String jobName;
     public Integer cylinderWidth;
     public Integer cylinderCircumference;
+    @Size(max = 255, message = "info must not exceed 255 characters.")
     public String info;
     public String noteInfo;
 
