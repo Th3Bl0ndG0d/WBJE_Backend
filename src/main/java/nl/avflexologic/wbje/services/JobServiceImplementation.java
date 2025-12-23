@@ -5,9 +5,10 @@ import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
 import nl.avflexologic.wbje.entities.JobEntity;
 import nl.avflexologic.wbje.mappers.JobDTOMapper;
 import nl.avflexologic.wbje.repositories.JobRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
+@Service
 public class JobServiceImplementation implements JobService {
 
     private final JobRepository jobRepository;
