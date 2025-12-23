@@ -38,60 +38,45 @@ public class JobEntity {
     public JobEntity(LocalDateTime jobDate) {
         this.jobDate = jobDate;
     }
-
-
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-
     public String getJobNumber() {
         return jobNumber;
     }
-
     public void setJobNumber(String jobNumber) {
         this.jobNumber = jobNumber;
     }
-
     public LocalDateTime getJobDate() {
         return jobDate;
     }
-
     public void setJobDate(LocalDateTime jobDate) {
         this.jobDate = jobDate;
     }
-
     public String getJobName() {
         return jobName;
     }
-
     public void setJobName(String jobName) {
         this.jobName = jobName;
     }
-
     public Integer getCylinderWidth() {
         return cylinderWidth;
     }
-
     public void setCylinderWidth(Integer cylinderWidth) {
         this.cylinderWidth = cylinderWidth;
     }
-
     public Integer getCylinderCircumference() {
         return cylinderCircumference;
     }
-
     public void setCylinderCircumference(Integer cylinderCircumference) {
         this.cylinderCircumference = cylinderCircumference;
     }
-
     public String getInfo() {
         return info;
     }
-
     public void setInfo(String info) {
         this.info = info;
     }

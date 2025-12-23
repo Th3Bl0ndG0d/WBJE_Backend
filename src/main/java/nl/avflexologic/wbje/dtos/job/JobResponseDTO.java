@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 /**
  * Uitgaand contract voor Job-gegevens.
  */
-public record JobResponseDTO(
-        Long id,
-        String jobNumber,
-        LocalDateTime jobDate,
-        String jobName,
-        String info,
-        Integer cylinderWidth,
-        Integer cylinderCircumference,
-        String noteInfo
-) { }
+public class JobResponseDTO {
+    public Long id;
+    public String jobNumber;
+    public LocalDateTime jobDate;
+    public String jobName;
+    public Integer cylinderWidth;
+    public Integer cylinderCircumference;
+    public String info;
+    public String noteInfo;
+}
 
