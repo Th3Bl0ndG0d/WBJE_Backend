@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant C as Client (WBJE UI/API)
+    participant JC as JobController
+    participant JS as JobService
+    participant JM as JobDTOMapper
+    participant JR as JobRepository
+    participant DB as Database
+
+    C->>JC: POST /jobs (JobRequestDTO)
+    JC->>JS: createJob(request)
+
+    JS->>JS: validateRequest(request)\n- request != null\n- request.jobDate != null
+
+    JS->>JM: toEntity(request)
+    JM->>JM: new JobEntity(request.jobDate)\nsetJobNumber(...)\nsetJobName(...)\nsetCylinderWidth(...)\nsetCylinderCircumference(...)\nsetInfo(...)
+
+    alt noteInfo is aanwezig
+        JM->>JM: new NoteEntity(noteInfo)\njob.setNote(note)
+    end
+
+    JS->>JR: save(jobEntity)
+    JR->>DB: INSERT Job (+ Note indien aanwezig)
+    DB-->>JR: persisted JobEntity (met gegenereerde id)
+
+    JS->>JM: toDto(savedEntity)
+    JM-->>JS: JobResponseDTO
+
+    JS-->>JC: JobResponseDTO
+    JC-->>C: HTTP 201 Created (JobResponseDTO)

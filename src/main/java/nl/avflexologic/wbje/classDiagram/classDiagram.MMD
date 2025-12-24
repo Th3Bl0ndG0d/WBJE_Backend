@@ -1,0 +1,74 @@
+classDiagram
+%% ============================
+%% Domein-entiteiten
+%% ============================
+
+    class Job {
+        +int JobID
+        -string JobNumber
+        -datetime JobDate
+        -string JobName
+        -string Info
+    }
+
+    class Cylinder {
+        +int CylinderID
+        -int CylinderNr
+        -string Color
+        -string CylinderInfo
+    }
+
+    class TapeSpec {
+        +int TapeSpecID
+        -string TapeName
+        -string TapeType
+        -int Thickness
+        -string Info
+    }
+
+    class ReportSpec {
+        +int ReportSpecID
+        -string ReportName
+        -string ReportType
+        -int Thickness
+        -string Info
+    }
+
+    class Report {
+        +int ReportID
+        -int ReportNr
+        -int PartOfID
+        -int ReportTag
+        -int XOffset
+        -int YOffset
+        -int ReportTargetDistanceFromEdgeOfPlate
+    }
+
+    class Note {
+        +int JobID
+        -string Info
+    }
+
+%% ============================
+%% Relaties
+%% ============================
+
+Job "1" o-- "1..*" Cylinder : contains
+Job "1" o-- "0..1" Note : has
+
+Cylinder "1" --> "1" TapeSpec : uses
+Cylinder "1" o-- "0..*" Report : contains
+
+Report "1" --> "1" ReportSpec : uses
+
+%% ============================
+%% Notes
+%% ============================
+
+note for Cylinder "UNIQUE (Job, CylinderNr) in DB:<br/>UNIQUE (JobID, CylinderNr)"
+
+note for TapeSpec "DB: Jobs has TapeSpecID (FK)<br/>Domain: Cylinder -&gt; TapeSpec<br/><br/>Mapping options:<br/>- inherit job-level spec to all cylinders<br/>- derive per cylinder via app rules"
+
+note for ReportSpec "DB: Jobs has ReportSpecID (FK)<br/>Domain (new): Report -&gt; ReportSpec"
+
+note for Report "DB: Report key is (JobID, ReportNr) and FK to Job<br/>Domain: Report belongs to Cylinder<br/><br/>Mapping resolved in application layer"
