@@ -1,0 +1,157 @@
+@startuml
+title GET /jobs/{id} - Job ophalen (incl. cylinders/plates) - JSON response via DTO (via services)
+
+autonumber
+
+actor Client
+participant JobController
+participant "Auth/Role Check" as AuthFilter
+participant JobService
+participant CylinderService
+participant PlateService
+participant JobRepository
+participant CylinderRepository
+participant PlateRepository
+participant JobDTOMapper
+
+'=================================================
+' 1) Happy flow
+'=================================================
+Client -> JobController : GET /jobs/{id} (token)
+activate JobController
+
+JobController -> AuthFilter : validateTokenAndRole(token)
+activate AuthFilter
+AuthFilter --> JobController : OK
+deactivate AuthFilter
+
+JobController -> JobService : getJobById(id)
+activate JobService
+
+JobService -> JobRepository : findById(id)
+activate JobRepository
+JobRepository --> JobService : JobEntity
+deactivate JobRepository
+
+JobService -> CylinderService : getCylindersByJobId(jobId)
+activate CylinderService
+CylinderService -> CylinderRepository : findAllByJobId(jobId)
+activate CylinderRepository
+CylinderRepository --> CylinderService : cylinders[]
+deactivate CylinderRepository
+CylinderService --> JobService : cylinders[]
+deactivate CylinderService
+
+loop For each cylinder in cylinders[]
+  JobService -> PlateService : getPlatesByCylinderId(cylinderId)
+  activate PlateService
+  PlateService -> PlateRepository : findAllByCylinderId(cylinderId)
+  activate PlateRepository
+  PlateRepository --> PlateService : plates[]
+  deactivate PlateRepository
+  PlateService --> JobService : plates[]
+  deactivate PlateService
+end
+
+note right of JobService
+Samenstellen hiërarchie (Job -> Cylinders -> Plates) in service-laag
+end note
+
+JobService -> JobDTOMapper : toResponseDTO(JobEntity + cylinders + plates)
+activate JobDTOMapper
+JobDTOMapper --> JobService : JobResponseDTO
+deactivate JobDTOMapper
+
+JobService --> JobController : JobResponseDTO
+deactivate JobService
+
+JobController --> Client : 200 OK (application/json)\nJobResponseDTO serialized to JSON
+deactivate JobController
+
+note right of Client
+Voorbeeld response (indicatief):
+
+{
+  "id": 42,
+  "jobNumber": "J-2025-001",
+  "jobName": "Demo job",
+  "jobDate": "2025-12-29",
+  "info": "Optional notes",
+  "repeat": false,
+  "cylinders": [
+    {
+      "id": 1,
+      "name": "C1",
+      "plates": [
+        {
+          "id": 10,
+          "width": 123.4,
+          "topHeight": 12.0,
+          "bottomHeight": 11.5,
+          "x": 100.0,
+          "y": 50.0
+        }
+      ]
+    }
+  ]
+}
+end note
+
+
+'=================================================
+' 2) Alternative flow: Authentication failed
+'=================================================
+alt Authentication failed
+  Client -> JobController : GET /jobs/{id} (token)
+  activate JobController
+
+  JobController -> AuthFilter : validateTokenAndRole(token)
+  activate AuthFilter
+  AuthFilter --> JobController : INVALID
+  deactivate AuthFilter
+
+  JobController --> Client : 401 Unauthorized
+  deactivate JobController
+end
+
+alt Authorization failed
+  Client -> JobController : GET /jobs/{id} (token)
+  activate JobController
+
+  JobController -> AuthFilter : validateTokenAndRole(token)
+  activate AuthFilter
+  AuthFilter --> JobController : FORBIDDEN
+  deactivate AuthFilter
+
+  JobController --> Client : 403 Forbidden
+  deactivate JobController
+end
+
+
+'=================================================
+' 3) Alternative flow: Job not found
+'=================================================
+alt Job not found
+  Client -> JobController : GET /jobs/{id} (token)
+  activate JobController
+
+  JobController -> AuthFilter : validateTokenAndRole(token)
+  activate AuthFilter
+  AuthFilter --> JobController : OK
+  deactivate AuthFilter
+
+  JobController -> JobService : getJobById(id)
+  activate JobService
+
+  JobService -> JobRepository : findById(id)
+  activate JobRepository
+  JobRepository --> JobService : empty
+  deactivate JobRepository
+
+  JobService --> JobController : NotFoundException
+  deactivate JobService
+
+  JobController --> Client : 404 Not Found
+  deactivate JobController
+end
+@enduml

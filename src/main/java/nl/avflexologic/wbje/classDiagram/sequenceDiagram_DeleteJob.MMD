@@ -1,0 +1,106 @@
+sequenceDiagram
+    autonumber
+
+    actor Client
+    participant JobController
+    participant AuthFilter as Auth/Role Check
+    participant JobService
+    participant CylinderService
+    participant PlateService
+    participant JobRepository
+    participant CylinderRepository
+    participant PlateRepository
+
+%% ========================
+%% 1) Happy flow
+%% ========================
+    Client->>JobController: DELETE /jobs/{id} (token)
+    activate JobController
+
+    JobController->>AuthFilter: validateTokenAndRole(token)
+    activate AuthFilter
+    AuthFilter-->>JobController: OK
+    deactivate AuthFilter
+
+    JobController->>JobService: deleteJob(id)
+    activate JobService
+
+    JobService->>JobRepository: findById(id)
+    activate JobRepository
+    JobRepository-->>JobService: JobEntity
+    deactivate JobRepository
+
+    Note right of JobService: Verwijderen in één transactie
+
+    JobService->>CylinderService: getCylindersByJobId(id)
+    activate CylinderService
+    CylinderService->>CylinderRepository: findAllByJobId(id)
+    activate CylinderRepository
+    CylinderRepository-->>CylinderService: cylinders[]
+    deactivate CylinderRepository
+    CylinderService-->>JobService: cylinders[]
+    deactivate CylinderService
+
+    loop For each cylinder
+        JobService->>PlateService: deletePlatesByCylinderId(cylinderId)
+        activate PlateService
+
+        PlateService->>PlateRepository: findAllByCylinderId(cylinderId)
+        activate PlateRepository
+        PlateRepository-->>PlateService: plates[]
+        deactivate PlateRepository
+
+        loop For each plate
+            PlateService->>PlateRepository: deleteById(plateId)
+            PlateRepository-->>PlateService: deleted
+        end
+
+        deactivate PlateService
+
+        JobService->>CylinderService: deleteCylinder(cylinderId)
+        activate CylinderService
+        CylinderService->>CylinderRepository: deleteById(cylinderId)
+        activate CylinderRepository
+        CylinderRepository-->>CylinderService: deleted
+        deactivate CylinderRepository
+        deactivate CylinderService
+    end
+
+    JobService->>JobRepository: deleteById(id)
+    activate JobRepository
+    JobRepository-->>JobService: deleted
+    deactivate JobRepository
+
+    JobService-->>JobController: success
+    deactivate JobService
+
+    JobController-->>Client: 204 No Content
+    deactivate JobController
+
+
+%% ========================
+%% 2) Alternative flow: Job not found
+%% ========================
+    alt Job not found
+        Client->>JobController: DELETE /jobs/{id} (token)
+        activate JobController
+
+        JobController->>AuthFilter: validateTokenAndRole(token)
+        activate AuthFilter
+        AuthFilter-->>JobController: OK
+        deactivate AuthFilter
+
+        JobController->>JobService: deleteJob(id)
+        activate JobService
+
+        JobService->>JobRepository: findById(id)
+        activate JobRepository
+        JobRepository-->>JobService: empty
+        deactivate JobRepository
+
+        JobService-->>JobController: NotFoundException
+        deactivate JobService
+
+        JobController-->>Client: 404 Not Found
+        deactivate JobController
+    end
