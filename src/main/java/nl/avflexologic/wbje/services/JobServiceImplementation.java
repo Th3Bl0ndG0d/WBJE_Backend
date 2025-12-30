@@ -3,13 +3,11 @@ package nl.avflexologic.wbje.services;
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
 import nl.avflexologic.wbje.entities.JobEntity;
-import nl.avflexologic.wbje.exceptions.JobNotFoundException;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.JobDTOMapper;
 import nl.avflexologic.wbje.repositories.JobRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 @Service
 public class JobServiceImplementation implements JobService {
 
@@ -26,10 +24,10 @@ public class JobServiceImplementation implements JobService {
             throw new IllegalArgumentException("Job request must not be null.");
         }
 
-        JobEntity entity = JobDTOMapper.toEntity(request);
+        JobEntity entity = JobDTOMapper.mapToEntity(request);
         JobEntity saved = jobRepository.save(entity);
 
-        return JobDTOMapper.toDto(saved);
+        return JobDTOMapper.mapToDto(saved);
     }
 
     @Override
@@ -43,7 +41,7 @@ public class JobServiceImplementation implements JobService {
 //
 //        return JobDTOMapper.toDto(entity);
         return jobRepository.findById(id)
-                .map(JobDTOMapper::toDto)
+                .map(JobDTOMapper::mapToDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found for id: " + id));
     }
 
