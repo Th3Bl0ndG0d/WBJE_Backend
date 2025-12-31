@@ -7,7 +7,7 @@ import nl.avflexologic.wbje.entities.JobEntity;
 import nl.avflexologic.wbje.entities.NoteEntity;
 
 public class JobDTOMapper {
-    public static JobEntity toEntity(JobRequestDTO dto) {
+    public static JobEntity mapToEntity(JobRequestDTO dto) {
         JobEntity job = new JobEntity(dto.jobDate);
         job.setJobNumber(dto.getJobNumber());
         job.setJobName(dto.getJobName());
@@ -23,7 +23,7 @@ public class JobDTOMapper {
         }
         return job;
     }
-    public static JobResponseDTO toDto(JobEntity job) {
+    public static JobResponseDTO mapToDto(JobEntity job) {
         JobResponseDTO dto = new JobResponseDTO();
         dto.id = job.getId();
         dto.jobNumber = job.getJobNumber();

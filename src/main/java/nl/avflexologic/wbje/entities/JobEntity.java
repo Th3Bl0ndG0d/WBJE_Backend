@@ -3,6 +3,8 @@ package nl.avflexologic.wbje.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "jobs")
@@ -100,5 +102,30 @@ public class JobEntity {
         this.note = note;
     }
 
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CylinderEntity> cylinders = new ArrayList<>();
+
+    public List<CylinderEntity> getCylinders() {
+        return cylinders;
+    }
+    /** Keeps the 1..* relationship consistent. */
+    public void addCylinder(CylinderEntity cylinder) {
+        if (cylinder == null) return;
+        if (!this.cylinders.contains(cylinder)) {
+            this.cylinders.add(cylinder);
+        }
+        cylinder.setJob(this);
+    }
+
+    /** Orphan removal deletes the cylinder when it is removed from the job. */
+    public void removeCylinder(CylinderEntity cylinder) {
+        if (cylinder == null) return;
+
+        this.cylinders.remove(cylinder);
+
+        if (cylinder.getJob() == this) {
+            cylinder.setJob(null);
+        }
+    }
 
 }

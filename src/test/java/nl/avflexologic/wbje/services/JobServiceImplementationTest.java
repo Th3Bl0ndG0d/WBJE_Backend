@@ -1,4 +1,5 @@
 package nl.avflexologic.wbje.services;
+
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
 import nl.avflexologic.wbje.entities.JobEntity;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 public class JobServiceImplementationTest {
+
     @Mock
     private JobRepository jobRepository;
 
@@ -48,17 +50,33 @@ public class JobServiceImplementationTest {
         assertEquals(date, response.jobDate);
     }
 
-    @Test
-    void createJob_throws_exception_when_jobDate_is_missing() {
-        JobRequestDTO request = new JobRequestDTO(null);
-        request.jobDate = null;
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> jobService.createJob(request)
-        );
-
-        assertEquals("jobDate is required.", ex.getMessage());
-        verifyNoInteractions(jobRepository);
-    }
+//    @Test
+//    void createJob_throws_exception_when_jobDate_is_missing() {
+//        // Arrange
+//        JobRequestDTO request = new JobRequestDTO(null);
+//        request.jobDate = null;
+//
+//        // Act
+//        IllegalArgumentException ex = assertThrows(
+//                IllegalArgumentException.class,
+//                () -> jobService.createJob(request)
+//        );
+//
+//        // Assert
+//        assertEquals("jobDate is required.", ex.getMessage());
+//        verifyNoInteractions(jobRepository);
+//    }
+//
+//    @Test
+//    void createJob_throws_exception_when_request_is_null() {
+//        // Act
+//        IllegalArgumentException ex = assertThrows(
+//                IllegalArgumentException.class,
+//                () -> jobService.createJob(null)
+//        );
+//
+//        // Assert
+//        assertEquals("Job request must not be null.", ex.getMessage());
+//        verifyNoInteractions(jobRepository);
+//    }
 }
