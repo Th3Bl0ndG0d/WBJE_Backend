@@ -22,7 +22,7 @@ public class ReportSpecEntity {
     @Column(name = "info", length = 255)
     private String info;
 
-    protected ReportSpecEntity() {
+    public ReportSpecEntity() {
         // Required by JPA.
     }
 
