@@ -8,7 +8,9 @@ import java.util.Objects;
 @Table(
         name = "reports",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_report_cylinder_nr", columnNames = {"cylinder_id", "report_nr"})
+                @UniqueConstraint(
+                        name = "uk_report_cylinder_nr",
+                        columnNames = {"cylinder_id", "report_nr"})
         }
 )
 public class ReportEntity {
