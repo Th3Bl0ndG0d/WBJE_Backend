@@ -8,6 +8,9 @@ import nl.avflexologic.wbje.mappers.JobDTOMapper;
 import nl.avflexologic.wbje.repositories.JobRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class JobServiceImplementation implements JobService {
 
@@ -19,41 +22,61 @@ public class JobServiceImplementation implements JobService {
 
     @Override
     public JobResponseDTO createJob(JobRequestDTO request) {
-        //Validate and trow exception
-        if (request == null || request.jobDate == null) {
+        if (request == null) {
             throw new IllegalArgumentException("Job request must not be null.");
         }
 
         JobEntity entity = JobDTOMapper.mapToEntity(request);
         JobEntity saved = jobRepository.save(entity);
-
         return JobDTOMapper.mapToDto(saved);
     }
 
     @Override
     public JobResponseDTO getJobById(Long id) {
-//        if (id == null) {
-//            throw new IllegalArgumentException("Job id is required.");
-//        }
-//
-//        Optional<JobEntity> result = jobRepository.findById(id);
-//        JobEntity entity = result.orElseThrow(() -> new JobNotFoundException(id));
-//
-//        return JobDTOMapper.toDto(entity);
         return jobRepository.findById(id)
                 .map(JobDTOMapper::mapToDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found for id: " + id));
     }
 
     /**
-     * Validates the minimal invariants of the incoming job request.
+     * Returns all jobs in the system.
      */
-    private void validateRequest(JobRequestDTO request) {
+    @Override
+    public List<JobResponseDTO> getAllJobs() {
+        List<JobEntity> entities = jobRepository.findAll();
+        List<JobResponseDTO> result = new ArrayList<>();
+        for (JobEntity entity : entities) {
+            result.add(JobDTOMapper.mapToDto(entity));
+        }
+        return result;
+    }
+
+    /**
+     * Updates an existing job. The job must exist before it can be updated.
+     */
+    @Override
+    public JobResponseDTO updateJob(Long id, JobRequestDTO request) {
         if (request == null) {
-            throw new IllegalArgumentException("JobRequestDTO is required.");
+            throw new IllegalArgumentException("Job request must not be null.");
         }
-        if (request.jobDate == null) {
-            throw new IllegalArgumentException("jobDate is required.");
-        }
+
+        JobEntity existing = jobRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found for id: " + id));
+
+        JobDTOMapper.updateEntity(existing, request);
+
+        JobEntity saved = jobRepository.save(existing);
+        return JobDTOMapper.mapToDto(saved);
+    }
+
+    /**
+     * Deletes an existing job. The job must exist before it can be deleted.
+     */
+    @Override
+    public void deleteJob(Long id) {
+        JobEntity existing = jobRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found for id: " + id));
+
+        jobRepository.delete(existing);
     }
 }
