@@ -3,12 +3,24 @@ package nl.avflexologic.wbje.dtos.job;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Response payload representing a job that is stored in the system.
  */
 @Schema(description = "Response payload representing a job that is stored in the system.")
 public class JobResponseDTO {
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        JobResponseDTO that = (JobResponseDTO) o;
+        return Objects.equals(id, that.id) && Objects.equals(jobNumber, that.jobNumber) && Objects.equals(jobDate, that.jobDate) && Objects.equals(jobName, that.jobName) && Objects.equals(cylinderWidth, that.cylinderWidth) && Objects.equals(cylinderCircumference, that.cylinderCircumference) && Objects.equals(info, that.info) && Objects.equals(noteInfo, that.noteInfo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, jobNumber, jobDate, jobName, cylinderWidth, cylinderCircumference, info, noteInfo);
+    }
 
     @Schema(description = "Database identifier of the job.", example = "42")
     public Long id;

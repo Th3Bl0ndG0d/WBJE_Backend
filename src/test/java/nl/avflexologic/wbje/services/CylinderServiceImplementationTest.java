@@ -12,16 +12,26 @@ import nl.avflexologic.wbje.repositories.JobRepository;
 import nl.avflexologic.wbje.repositories.TapeSpecRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link CylinderServiceImplementation}.
+ *
+ * The tests follow the AAA pattern (Arrange, Act, Assert) and cover:
+ * - validation and not-found branches (Job / Cylinder / TapeSpec)
+ * - successful create/read/update/delete flows
+ * - expected repository and mapper interactions
+ */
 @ExtendWith(MockitoExtension.class)
 class CylinderServiceImplementationTest {
 
@@ -41,7 +51,8 @@ class CylinderServiceImplementationTest {
     private CylinderServiceImplementation cylinderService;
 
     @Test
-    void createCylinder_creates_and_returns_response() {
+    void createCylinder_validRequest() {
+        // Arrange
         Long jobId = 1L;
         Long tapeSpecId = 10L;
 
@@ -52,11 +63,15 @@ class CylinderServiceImplementationTest {
                 tapeSpecId
         );
 
-        JobEntity job = new JobEntity(java.time.LocalDateTime.now());
+        /*
+         * A spy is used to validate that the service manipulates the aggregate root (Job) as intended.
+         * The production code adds the cylinder via Job to keep the association consistent.
+         */
+        JobEntity job = spy(new JobEntity(LocalDateTime.now()));
         TapeSpecEntity tapeSpec = new TapeSpecEntity();
 
-        CylinderEntity mappedEntity = mock(CylinderEntity.class);
-        CylinderEntity savedEntity = mock(CylinderEntity.class);
+        CylinderEntity mappedCylinder = mock(CylinderEntity.class);
+        CylinderEntity savedCylinder = mock(CylinderEntity.class);
 
         CylinderResponseDTO response = new CylinderResponseDTO(
                 100L,
@@ -69,47 +84,360 @@ class CylinderServiceImplementationTest {
 
         when(jobRepository.findById(jobId)).thenReturn(Optional.of(job));
         when(tapeSpecRepository.findById(tapeSpecId)).thenReturn(Optional.of(tapeSpec));
-        when(cylinderDTOMapper.mapToEntity(request, job, tapeSpec)).thenReturn(mappedEntity);
-        when(cylinderRepository.save(mappedEntity)).thenReturn(savedEntity);
-        when(cylinderDTOMapper.mapToDto(savedEntity)).thenReturn(response);
+        when(cylinderDTOMapper.mapToEntity(request, job, tapeSpec)).thenReturn(mappedCylinder);
+        when(cylinderRepository.save(mappedCylinder)).thenReturn(savedCylinder);
+        when(cylinderDTOMapper.mapToDto(savedCylinder)).thenReturn(response);
 
+        // Act
         CylinderResponseDTO result = cylinderService.createCylinder(jobId, request);
 
-        assertNotNull(result);
-        assertEquals(100L, result.id());
-        assertEquals(1, result.cylinderNr());
-        assertEquals(jobId, result.jobId());
-        assertEquals(tapeSpecId, result.tapeSpecId());
+        // Assert
+        assertNotNull(result, "A successful create operation must return a response DTO.");
+        assertEquals(100L, result.id(), "The returned id must match the mapped response.");
+        assertEquals(1, result.cylinderNr(), "The returned cylinderNr must match the mapped response.");
+        assertEquals(jobId, result.jobId(), "The returned jobId must match the request context.");
+        assertEquals(tapeSpecId, result.tapeSpecId(), "The returned tapeSpecId must match the request.");
 
-        verify(jobRepository).findById(jobId);
-        verify(tapeSpecRepository).findById(tapeSpecId);
-        verify(cylinderRepository).save(mappedEntity);
-        verify(cylinderDTOMapper).mapToDto(savedEntity);
+        /*
+         * The job aggregate is expected to be updated via addCylinder() before persisting.
+         * This verifies that the service enforces aggregate consistency (bidirectional relation).
+         */
+        verify(job, times(1)).addCylinder(mappedCylinder);
+
+        verify(jobRepository, times(1)).findById(jobId);
+        verify(tapeSpecRepository, times(1)).findById(tapeSpecId);
+        verify(cylinderDTOMapper, times(1)).mapToEntity(request, job, tapeSpec);
+        verify(cylinderRepository, times(1)).save(mappedCylinder);
+        verify(cylinderDTOMapper, times(1)).mapToDto(savedCylinder);
+        verifyNoMoreInteractions(jobRepository, tapeSpecRepository, cylinderRepository, cylinderDTOMapper);
     }
 
     @Test
-    void createCylinder_throws_when_job_not_found() {
+    void createCylinder_jobMissing() {
+        // Arrange
         Long jobId = 999L;
-
-        CylinderRequestDTO request = new CylinderRequestDTO(
-                1,
-                "Cyan",
-                null,
-                10L
-        );
+        CylinderRequestDTO request = new CylinderRequestDTO(1, "Cyan", null, 10L);
 
         when(jobRepository.findById(jobId)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException ex = assertThrows(
+        // Act
+        ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> cylinderService.createCylinder(jobId, request)
         );
 
-        assertTrue(ex.getMessage().contains("Job not found"));
+        // Assert
+        assertEquals("Job not found with id: 999", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
 
-        verify(jobRepository).findById(jobId);
+        verify(jobRepository, times(1)).findById(jobId);
+        verifyNoInteractions(tapeSpecRepository, cylinderRepository, cylinderDTOMapper);
+    }
+
+    @Test
+    void createCylinder_tapeSpecMissing() {
+        // Arrange
+        Long jobId = 1L;
+        Long tapeSpecId = 404L;
+
+        CylinderRequestDTO request = new CylinderRequestDTO(1, "Cyan", "Info", tapeSpecId);
+        JobEntity job = new JobEntity(LocalDateTime.now());
+
+        when(jobRepository.findById(jobId)).thenReturn(Optional.of(job));
+        when(tapeSpecRepository.findById(tapeSpecId)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> cylinderService.createCylinder(jobId, request)
+        );
+
+        // Assert
+        assertEquals("TapeSpec not found with id: 404", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
+
+        verify(jobRepository, times(1)).findById(jobId);
+        verify(tapeSpecRepository, times(1)).findById(tapeSpecId);
+        verifyNoInteractions(cylinderRepository, cylinderDTOMapper);
+        verifyNoMoreInteractions(jobRepository, tapeSpecRepository);
+    }
+
+    @Test
+    void getCylinderById_found() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 10L;
+
+        CylinderEntity cylinder = mock(CylinderEntity.class);
+
+        CylinderResponseDTO response = new CylinderResponseDTO(
+                cylinderId,
+                1,
+                "Magenta",
+                "Info",
+                jobId,
+                10L
+        );
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
+        when(cylinderDTOMapper.mapToDto(cylinder)).thenReturn(response);
+
+        // Act
+        CylinderResponseDTO result = cylinderService.getCylinderById(jobId, cylinderId);
+
+        // Assert
+        assertNotNull(result, "A successful read operation must return a response DTO.");
+        assertEquals(cylinderId, result.id(), "The response id must match the requested cylinder id.");
+        assertEquals(jobId, result.jobId(), "The response jobId must match the requested job context.");
+
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+        verify(cylinderDTOMapper, times(1)).mapToDto(cylinder);
+        verifyNoMoreInteractions(cylinderRepository, cylinderDTOMapper);
+        verifyNoInteractions(jobRepository, tapeSpecRepository);
+    }
+
+    @Test
+    void getCylinderById_notFound() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 404L;
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> cylinderService.getCylinderById(jobId, cylinderId)
+        );
+
+        // Assert
+        assertEquals("Cylinder not found with id: 404 for job: 1", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
+
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+        verifyNoMoreInteractions(cylinderRepository);
+        verifyNoInteractions(jobRepository, tapeSpecRepository, cylinderDTOMapper);
+    }
+
+    @Test
+    void getCylindersByJob_jobMissing() {
+        // Arrange
+        Long jobId = 123L;
+        when(jobRepository.existsById(jobId)).thenReturn(false);
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> cylinderService.getCylindersByJob(jobId)
+        );
+
+        // Assert
+        assertEquals("Job not found with id: 123", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
+
+        verify(jobRepository, times(1)).existsById(jobId);
+        verifyNoMoreInteractions(jobRepository);
+        verifyNoInteractions(cylinderRepository, tapeSpecRepository, cylinderDTOMapper);
+    }
+
+    @Test
+    void getCylindersByJob_populated() {
+        // Arrange
+        Long jobId = 1L;
+
+        List<CylinderEntity> cylinders = List.of(mock(CylinderEntity.class), mock(CylinderEntity.class));
+        List<CylinderResponseDTO> mapped = List.of(
+                new CylinderResponseDTO(1L, 1, "Cyan", "Info 1", jobId, 10L),
+                new CylinderResponseDTO(2L, 2, "Magenta", "Info 2", jobId, 10L)
+        );
+
+        when(jobRepository.existsById(jobId)).thenReturn(true);
+        when(cylinderRepository.findAllByJob_Id(jobId)).thenReturn(cylinders);
+        when(cylinderDTOMapper.mapToDto(cylinders)).thenReturn(mapped);
+
+        // Act
+        List<CylinderResponseDTO> result = cylinderService.getCylindersByJob(jobId);
+
+        // Assert
+        assertNotNull(result, "The service must never return a null list.");
+        assertEquals(2, result.size(), "Each entity must be mapped to exactly one DTO.");
+        assertEquals(1L, result.get(0).id(), "The first mapped DTO must reflect the mapper output.");
+        assertEquals(2L, result.get(1).id(), "The second mapped DTO must reflect the mapper output.");
+
+        verify(jobRepository, times(1)).existsById(jobId);
+        verify(cylinderRepository, times(1)).findAllByJob_Id(jobId);
+        verify(cylinderDTOMapper, times(1)).mapToDto(cylinders);
+        verifyNoMoreInteractions(jobRepository, cylinderRepository, cylinderDTOMapper);
         verifyNoInteractions(tapeSpecRepository);
-        verifyNoInteractions(cylinderRepository);
-        verifyNoInteractions(cylinderDTOMapper);
+    }
+
+    @Test
+    void updateCylinder_notFound() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 999L;
+
+        CylinderRequestDTO request = new CylinderRequestDTO(1, "Cyan", "Info", 10L);
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> cylinderService.updateCylinder(jobId, cylinderId, request)
+        );
+
+        // Assert
+        assertEquals("Cylinder not found with id: 999 for job: 1", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
+
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+        verifyNoMoreInteractions(cylinderRepository);
+        verifyNoInteractions(jobRepository, tapeSpecRepository, cylinderDTOMapper);
+    }
+
+    @Test
+    void updateCylinder_tapeSpecMissing() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 10L;
+        Long tapeSpecId = 404L;
+
+        CylinderRequestDTO request = new CylinderRequestDTO(1, "Cyan", "Info", tapeSpecId);
+
+        CylinderEntity cylinder = mock(CylinderEntity.class);
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
+        when(tapeSpecRepository.findById(tapeSpecId)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> cylinderService.updateCylinder(jobId, cylinderId, request)
+        );
+
+        // Assert
+        assertEquals("TapeSpec not found with id: 404", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
+
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+        verify(tapeSpecRepository, times(1)).findById(tapeSpecId);
+        verifyNoMoreInteractions(cylinderRepository, tapeSpecRepository);
+        verifyNoInteractions(jobRepository, cylinderDTOMapper);
+    }
+
+    @Test
+    void updateCylinder_success() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 10L;
+        Long tapeSpecId = 10L;
+
+        CylinderRequestDTO request = new CylinderRequestDTO(2, "Black", "Updated", tapeSpecId);
+
+        CylinderEntity cylinder = mock(CylinderEntity.class);
+        TapeSpecEntity tapeSpec = new TapeSpecEntity();
+
+        CylinderEntity saved = mock(CylinderEntity.class);
+
+        CylinderResponseDTO response = new CylinderResponseDTO(
+                cylinderId,
+                2,
+                "Black",
+                "Updated",
+                jobId,
+                tapeSpecId
+        );
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
+        when(tapeSpecRepository.findById(tapeSpecId)).thenReturn(Optional.of(tapeSpec));
+
+        // updateEntity has side effects only; it is validated through interaction verification.
+        doNothing().when(cylinderDTOMapper).updateEntity(cylinder, request, tapeSpec);
+
+        when(cylinderRepository.save(cylinder)).thenReturn(saved);
+        when(cylinderDTOMapper.mapToDto(saved)).thenReturn(response);
+
+        // Act
+        CylinderResponseDTO result = cylinderService.updateCylinder(jobId, cylinderId, request);
+
+        // Assert
+        assertNotNull(result, "A successful update operation must return a response DTO.");
+        assertEquals(cylinderId, result.id(), "The response id must match the requested cylinder id.");
+        assertEquals(2, result.cylinderNr(), "The updated cylinderNr must reflect the request.");
+        assertEquals("Black", result.color(), "The updated color must reflect the request.");
+        assertEquals("Updated", result.cylinderInfo(), "The updated cylinderInfo must reflect the request.");
+        assertEquals(jobId, result.jobId(), "The response must preserve the job context.");
+        assertEquals(tapeSpecId, result.tapeSpecId(), "The response must preserve the TapeSpec reference.");
+
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+        verify(tapeSpecRepository, times(1)).findById(tapeSpecId);
+        verify(cylinderDTOMapper, times(1)).updateEntity(cylinder, request, tapeSpec);
+        verify(cylinderRepository, times(1)).save(cylinder);
+        verify(cylinderDTOMapper, times(1)).mapToDto(saved);
+        verifyNoMoreInteractions(cylinderRepository, tapeSpecRepository, cylinderDTOMapper);
+        verifyNoInteractions(jobRepository);
+    }
+
+    @Test
+    void deleteCylinder_notFound() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 404L;
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> cylinderService.deleteCylinder(jobId, cylinderId)
+        );
+
+        // Assert
+        assertEquals("Cylinder not found with id: 404 for job: 1", exception.getMessage(),
+                "The error message must remain stable for consistent API error handling.");
+
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+        verifyNoMoreInteractions(cylinderRepository);
+        verifyNoInteractions(jobRepository, tapeSpecRepository, cylinderDTOMapper);
+    }
+
+    @Test
+    void deleteCylinder_success() {
+        // Arrange
+        Long jobId = 1L;
+        Long cylinderId = 10L;
+
+        /*
+         * The production code removes via Job to keep the aggregate consistent.
+         * A spy allows verification of removeCylinder(cylinder) without changing domain classes.
+         */
+        JobEntity job = spy(new JobEntity(LocalDateTime.now()));
+        CylinderEntity cylinder = mock(CylinderEntity.class);
+
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
+        when(cylinder.getJob()).thenReturn(job);
+
+        /*
+         * Ensure the cylinder is part of the job aggregate, so that removeCylinder() performs a meaningful state change.
+         * addCylinder() will call cylinder.setJob(job) which is safe for a mock.
+         */
+        job.addCylinder(cylinder);
+
+        // Act
+        cylinderService.deleteCylinder(jobId, cylinderId);
+
+        // Assert
+        verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
+
+        /*
+         * The service must enforce aggregate consistency before deletion.
+         * This verifies that removal is performed via the aggregate root rather than solely via the repository.
+         */
+        verify(job, times(1)).removeCylinder(cylinder);
+
+        verify(cylinderRepository, times(1)).delete(cylinder);
+        verifyNoMoreInteractions(cylinderRepository);
+        verifyNoInteractions(jobRepository, tapeSpecRepository, cylinderDTOMapper);
     }
 }
