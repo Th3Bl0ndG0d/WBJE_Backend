@@ -3,34 +3,304 @@ package nl.avflexologic.wbje.services;
 import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecRequestDTO;
 import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecResponseDTO;
 import nl.avflexologic.wbje.entities.ReportSpecEntity;
+import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.ReportSpecDTOMapper;
 import nl.avflexologic.wbje.repositories.ReportSpecRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ReportSpecServiceImplementationTest {
+/**
+ * Unit tests for {@link ReportSpecServiceImplementation}.
+ *
+ * The suite focuses on deterministic behavior at service level:
+ * - create/read/list/update/delete flows
+ * - not-found branches for read/update/delete
+ *
+ * Tests follow AAA (Arrange, Act, Assert) with concise scenario-oriented naming.
+ */
+@ExtendWith(MockitoExtension.class)
+class ReportSpecServiceImplementationTest {
+
+    @Mock
+    private ReportSpecRepository reportSpecRepository;
+
+    @Mock
+    private ReportSpecDTOMapper reportSpecDTOMapper;
+
+    @InjectMocks
+    private ReportSpecServiceImplementation reportSpecService;
 
     @Test
-    void createReportSpec_saves_and_returns_dto() {
-        ReportSpecRepository repository = mock(ReportSpecRepository.class);
-        ReportSpecDTOMapper mapper = new ReportSpecDTOMapper();
-        ReportSpecService service = new ReportSpecServiceImplementation(repository, mapper);
+    void createReportSpec_validRequest() {
+        // Arrange
+        ReportSpecRequestDTO request = new ReportSpecRequestDTO(
+                "Plate A",
+                "Photopolymer",
+                67,
+                "Default plate spec"
+        );
 
-        ReportSpecEntity saved = new ReportSpecEntity();
-        saved.setReportName("Plate A");
-        saved.setReportType("Photopolymer");
-        saved.setThickness(67);
-        saved.setInfo("Default plate spec");
+        /*
+         * The entity id is database-generated (JPA @GeneratedValue).
+         * This test avoids stubbing getId() on the saved entity, because the returned DTO is provided
+         * by the mapper stub and does not require entity state access.
+         */
+        ReportSpecEntity mapped = mock(ReportSpecEntity.class);
+        ReportSpecEntity saved = mock(ReportSpecEntity.class);
 
-        when(repository.save(any(ReportSpecEntity.class))).thenReturn(saved);
+        ReportSpecResponseDTO response = new ReportSpecResponseDTO(
+                1L,
+                "Plate A",
+                "Photopolymer",
+                67,
+                "Default plate spec"
+        );
 
-        ReportSpecRequestDTO request = new ReportSpecRequestDTO("Plate A", "Photopolymer", 67, "Default plate spec");
-        ReportSpecResponseDTO response = service.createReportSpec(request);
+        when(reportSpecDTOMapper.mapToEntity(request)).thenReturn(mapped);
+        when(reportSpecRepository.save(mapped)).thenReturn(saved);
+        when(reportSpecDTOMapper.mapToDto(saved)).thenReturn(response);
 
-        assertNotNull(response);
-        assertEquals("Plate A", response.reportName());
-        verify(repository, times(1)).save(any(ReportSpecEntity.class));
+        ArgumentCaptor<ReportSpecEntity> captor = ArgumentCaptor.forClass(ReportSpecEntity.class);
+
+        // Act
+        ReportSpecResponseDTO result = reportSpecService.createReportSpec(request);
+
+        // Assert
+        assertNotNull(result, "A successful create operation must return a response DTO.");
+        assertEquals(1L, result.id(), "The response id must reflect the mapper output.");
+        assertEquals("Plate A", result.reportName(), "The response must reflect the mapped reportName.");
+        assertEquals("Photopolymer", result.reportType(), "The response must reflect the mapped reportType.");
+        assertEquals(67, result.thickness(), "The response must reflect the mapped thickness.");
+        assertEquals("Default plate spec", result.info(), "The response must reflect the mapped info.");
+
+        verify(reportSpecDTOMapper, times(1)).mapToEntity(request);
+        verify(reportSpecRepository, times(1)).save(captor.capture());
+        verify(reportSpecDTOMapper, times(1)).mapToDto(saved);
+        verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
+
+        assertSame(mapped, captor.getValue(),
+                "The service must persist the entity instance returned by the mapper.");
+    }
+
+    @Test
+    void getReportSpecById_found() {
+        // Arrange
+        Long id = 10L;
+
+        ReportSpecEntity entity = mock(ReportSpecEntity.class);
+        when(reportSpecRepository.findById(id)).thenReturn(Optional.of(entity));
+
+        ReportSpecResponseDTO response = new ReportSpecResponseDTO(
+                id,
+                "Plate X",
+                "Type",
+                50,
+                "Info"
+        );
+        when(reportSpecDTOMapper.mapToDto(entity)).thenReturn(response);
+
+        // Act
+        ReportSpecResponseDTO result = reportSpecService.getReportSpecById(id);
+
+        // Assert
+        assertNotNull(result, "A successful read operation must return a response DTO.");
+        assertEquals(id, result.id(), "The response id must match the requested identifier.");
+        assertEquals("Plate X", result.reportName(), "The response must reflect the mapper output.");
+
+        verify(reportSpecRepository, times(1)).findById(id);
+        verify(reportSpecDTOMapper, times(1)).mapToDto(entity);
+        verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
+    }
+
+    @Test
+    void getReportSpecById_notFound() {
+        // Arrange
+        Long id = 404L;
+        when(reportSpecRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> reportSpecService.getReportSpecById(id)
+        );
+
+        // Assert
+        assertEquals("ReportSpec not found for id: 404", exception.getMessage(),
+                "The exception message must remain stable for consistent API error handling.");
+
+        verify(reportSpecRepository, times(1)).findById(id);
+        verifyNoMoreInteractions(reportSpecRepository);
+        verifyNoInteractions(reportSpecDTOMapper);
+    }
+
+    @Test
+    void getAllReportSpecs_empty() {
+        // Arrange
+        List<ReportSpecEntity> entities = List.of();
+        List<ReportSpecResponseDTO> mapped = List.of();
+
+        when(reportSpecRepository.findAll()).thenReturn(entities);
+        when(reportSpecDTOMapper.mapToDto(entities)).thenReturn(mapped);
+
+        // Act
+        List<ReportSpecResponseDTO> result = reportSpecService.getAllReportSpecs();
+
+        // Assert
+        assertNotNull(result, "The service must never return a null list.");
+        assertTrue(result.isEmpty(), "The list must be empty when the repository returns no entities.");
+
+        verify(reportSpecRepository, times(1)).findAll();
+        verify(reportSpecDTOMapper, times(1)).mapToDto(entities);
+        verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
+    }
+
+    @Test
+    void getAllReportSpecs_populated() {
+        // Arrange
+        ReportSpecEntity e1 = mock(ReportSpecEntity.class);
+        ReportSpecEntity e2 = mock(ReportSpecEntity.class);
+
+        List<ReportSpecEntity> entities = List.of(e1, e2);
+
+        List<ReportSpecResponseDTO> mapped = List.of(
+                new ReportSpecResponseDTO(1L, "A", "T", 10, "I1"),
+                new ReportSpecResponseDTO(2L, "B", "T", 12, "I2")
+        );
+
+        when(reportSpecRepository.findAll()).thenReturn(entities);
+        when(reportSpecDTOMapper.mapToDto(entities)).thenReturn(mapped);
+
+        // Act
+        List<ReportSpecResponseDTO> result = reportSpecService.getAllReportSpecs();
+
+        // Assert
+        assertNotNull(result, "The service must never return a null list.");
+        assertEquals(2, result.size(), "Each entity must be mapped to exactly one DTO.");
+        assertEquals(1L, result.get(0).id(), "The first DTO must reflect the mapper output.");
+        assertEquals(2L, result.get(1).id(), "The second DTO must reflect the mapper output.");
+
+        verify(reportSpecRepository, times(1)).findAll();
+        verify(reportSpecDTOMapper, times(1)).mapToDto(entities);
+        verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
+    }
+
+    @Test
+    void updateReportSpec_notFound() {
+        // Arrange
+        Long id = 999L;
+
+        ReportSpecRequestDTO request = new ReportSpecRequestDTO(
+                "Plate A",
+                "Photopolymer",
+                67,
+                "Default plate spec"
+        );
+
+        when(reportSpecRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> reportSpecService.updateReportSpec(id, request)
+        );
+
+        // Assert
+        assertEquals("ReportSpec not found for id: 999", exception.getMessage(),
+                "The exception message must remain stable for consistent API error handling.");
+
+        verify(reportSpecRepository, times(1)).findById(id);
+        verifyNoMoreInteractions(reportSpecRepository);
+        verifyNoInteractions(reportSpecDTOMapper);
+    }
+
+    @Test
+    void updateReportSpec_success() {
+        // Arrange
+        Long id = 10L;
+
+        ReportSpecRequestDTO request = new ReportSpecRequestDTO(
+                "Plate B",
+                "Rubber",
+                80,
+                "Updated spec"
+        );
+
+        ReportSpecEntity existing = mock(ReportSpecEntity.class);
+        ReportSpecEntity saved = mock(ReportSpecEntity.class);
+
+        when(reportSpecRepository.findById(id)).thenReturn(Optional.of(existing));
+        doNothing().when(reportSpecDTOMapper).updateEntity(existing, request);
+        when(reportSpecRepository.save(existing)).thenReturn(saved);
+
+        ReportSpecResponseDTO response = new ReportSpecResponseDTO(
+                id,
+                "Plate B",
+                "Rubber",
+                80,
+                "Updated spec"
+        );
+        when(reportSpecDTOMapper.mapToDto(saved)).thenReturn(response);
+
+        // Act
+        ReportSpecResponseDTO result = reportSpecService.updateReportSpec(id, request);
+
+        // Assert
+        assertNotNull(result, "A successful update operation must return a response DTO.");
+        assertEquals(id, result.id(), "The response id must preserve the requested identifier.");
+        assertEquals("Plate B", result.reportName(), "The response must reflect the updated reportName.");
+        assertEquals("Updated spec", result.info(), "The response must reflect the updated info.");
+
+        verify(reportSpecRepository, times(1)).findById(id);
+        verify(reportSpecDTOMapper, times(1)).updateEntity(existing, request);
+        verify(reportSpecRepository, times(1)).save(existing);
+        verify(reportSpecDTOMapper, times(1)).mapToDto(saved);
+        verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
+    }
+
+    @Test
+    void deleteReportSpec_notFound() {
+        // Arrange
+        Long id = 404L;
+        when(reportSpecRepository.existsById(id)).thenReturn(false);
+
+        // Act
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> reportSpecService.deleteReportSpec(id)
+        );
+
+        // Assert
+        assertEquals("ReportSpec not found for id: 404", exception.getMessage(),
+                "The exception message must remain stable for consistent API error handling.");
+
+        verify(reportSpecRepository, times(1)).existsById(id);
+        verifyNoMoreInteractions(reportSpecRepository);
+        verifyNoInteractions(reportSpecDTOMapper);
+    }
+
+    @Test
+    void deleteReportSpec_success() {
+        // Arrange
+        Long id = 10L;
+        when(reportSpecRepository.existsById(id)).thenReturn(true);
+
+        // Act
+        reportSpecService.deleteReportSpec(id);
+
+        // Assert
+        verify(reportSpecRepository, times(1)).existsById(id);
+        verify(reportSpecRepository, times(1)).deleteById(id);
+        verifyNoMoreInteractions(reportSpecRepository);
+        verifyNoInteractions(reportSpecDTOMapper);
     }
 }
