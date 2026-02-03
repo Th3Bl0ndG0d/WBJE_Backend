@@ -24,7 +24,7 @@ class ReportEntityTest {
 
     @Test
     void constructor_sets_required_fields() {
-        JobEntity job = new JobEntity(java.time.LocalDateTime.now());
+        JobEntity job = new JobEntity(LocalDateTime.now());
 
         TapeSpecEntity tapeSpec = new TapeSpecEntity();
         CylinderEntity cylinder = new CylinderEntity(job, tapeSpec, 1);
@@ -39,7 +39,7 @@ class ReportEntityTest {
 
     @Test
     void setters_update_optional_fields() {
-        JobEntity job = new JobEntity(java.time.LocalDateTime.now());
+        JobEntity job = new JobEntity(LocalDateTime.now());
 
         TapeSpecEntity tapeSpec = new TapeSpecEntity();
         CylinderEntity cylinder = new CylinderEntity(job, tapeSpec, 1);

@@ -6,7 +6,10 @@ import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
 import nl.avflexologic.wbje.services.JobService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
@@ -27,7 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Business logic, persistence and domain consistency are intentionally
  * excluded and delegated to dedicated service- and repository-level tests.
  */
-@WebMvcTest(JobController.class)
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false) //Dont forget to turn off the auth!! :S
 class JobControllerTest {
 
     /**
