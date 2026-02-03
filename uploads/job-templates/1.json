@@ -1,0 +1,166 @@
+{
+  "id": null,
+  "number": "JOB-TEMPLATE-4CLR-001",
+  "name": "Standard 4-Color Flexo Job",
+  "date": "2026-01-17",
+  "info": "This is a realistic WBJE template for a 4-color FAMM sleeve setup.",
+  "repeat": 850.0,
+
+  "note": {
+    "id": null,
+    "text": "Template note: adjust mounting tension based on operator guidelines."
+  },
+
+  "cylinders": [
+    {
+      "id": null,
+      "cylinderNr": 1,
+      "name": "C1 - Yellow",
+      "diameter": 178.0,
+      "tapeSpec": {
+        "id": null,
+        "brand": "3M",
+        "type": "Cushion Tape 1020",
+        "thickness": 0.50
+      },
+      "reports": [
+        {
+          "id": null,
+          "name": "Y_Report_001",
+          "reportSpec": {
+            "id": null,
+            "type": "DotGain",
+            "description": "Standard dot gain compensation curve for yellow."
+          }
+        }
+      ],
+      "plates": [
+        {
+          "id": null,
+          "width": 1200.0,
+          "topHeight": 350.0,
+          "bottomHeight": 350.0,
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "id": null,
+          "width": 1180.0,
+          "topHeight": 340.0,
+          "bottomHeight": 340.0,
+          "x": 10.0,
+          "y": 0.0
+        }
+      ]
+    },
+
+    {
+      "id": null,
+      "cylinderNr": 2,
+      "name": "C2 - Magenta",
+      "diameter": 178.0,
+      "tapeSpec": {
+        "id": null,
+        "brand": "Tesa",
+        "type": "Softprint 52018",
+        "thickness": 0.48
+      },
+      "reports": [
+        {
+          "id": null,
+          "name": "M_Report_001",
+          "reportSpec": {
+            "id": null,
+            "type": "Density",
+            "description": "Magenta density calibration curve."
+          }
+        },
+        {
+          "id": null,
+          "name": "M_Report_002",
+          "reportSpec": {
+            "id": null,
+            "type": "DotGain",
+            "description": "Secondary dot gain correction."
+          }
+        }
+      ],
+      "plates": [
+        {
+          "id": null,
+          "width": 1190.0,
+          "topHeight": 355.0,
+          "bottomHeight": 355.0,
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+
+    {
+      "id": null,
+      "cylinderNr": 3,
+      "name": "C3 - Cyan",
+      "diameter": 178.0,
+      "tapeSpec": {
+        "id": null,
+        "brand": "3M",
+        "type": "Cushion Tape 1020",
+        "thickness": 0.50
+      },
+      "reports": [],
+      "plates": [
+        {
+          "id": null,
+          "width": 1210.0,
+          "topHeight": 360.0,
+          "bottomHeight": 360.0,
+          "x": 0.0,
+          "y": 0.0
+        }
+      ]
+    },
+
+    {
+      "id": null,
+      "cylinderNr": 4,
+      "name": "C4 - Black",
+      "diameter": 178.0,
+      "tapeSpec": {
+        "id": null,
+        "brand": "Tesa",
+        "type": "Softprint 52018",
+        "thickness": 0.48
+      },
+      "reports": [
+        {
+          "id": null,
+          "name": "K_Report_001",
+          "reportSpec": {
+            "id": null,
+            "type": "Density",
+            "description": "Standard black density curve."
+          }
+        }
+      ],
+      "plates": [
+        {
+          "id": null,
+          "width": 1185.0,
+          "topHeight": 345.0,
+          "bottomHeight": 345.0,
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "id": null,
+          "width": 1170.0,
+          "topHeight": 330.0,
+          "bottomHeight": 330.0,
+          "x": 8.0,
+          "y": 0.0
+        }
+      ]
+    }
+  ]
+}
