@@ -53,40 +53,7 @@ public class SecurityConfigOauth {
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                                 .decoder(jwtDecoder())
                         ))
-
-
-
-//                .authorizeHttpRequests((auth) -> auth
-//                        .requestMatchers("/private").authenticated()
-//                        .requestMatchers("/public").permitAll()
-//                        // JOB TEMPLATES
-//                        .requestMatchers("/job-templates", "/job-templates/**")
-//                        .permitAll()
-//
-//                        .requestMatchers(HttpMethod.GET, "/admin").hasRole("ADMIN")
-//                        .requestMatchers("/hello").authenticated()
-//                        .requestMatchers("/roles").authenticated()
-//                        .requestMatchers(
-//                                "/swagger-ui.html",
-//                                "/swagger-ui/**",
-//                                "/v3/api-docs",
-//                                "/v3/api-docs/**",
-//                                "/v3/api-docs.yaml",
-//                                "/swagger-resources/**",
-//                                "/webjars/**"
-//                        ).permitAll()
-//                )
-//                .build();
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/private").authenticated()
-                        .requestMatchers("/public").permitAll()
-
-                        // JOB TEMPLATES - tijdelijk alles toestaan om 403 te isoleren
-                        .requestMatchers("/job-templates", "/job-templates/**").permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/admin").hasRole("ADMIN")
-                        .requestMatchers("/hello").authenticated()
-                        .requestMatchers("/roles").authenticated()
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -96,7 +63,25 @@ public class SecurityConfigOauth {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                                // Debug-endpoints alleen voor ADMIN (Service)
+                                .requestMatchers("/debug-auth", "/roles").hasRole("ADMIN")
+
+                                // Admin-only API's (Service)
+                                .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                                // Jobbeheer – zowel Operator (USER) als Service (ADMIN)
+                                .requestMatchers(
+                                        "/jobs/**",
+                                        "/cylinders/**",
+                                        "/reports/**",
+                                        "/tapes/**"
+                                ).hasAnyRole("USER", "ADMIN")
+
+                                // Job-templates – ook voor Operator en Service
+                                .requestMatchers("/job-templates/**").hasRole("ADMIN")
+
+                                // Alles wat overblijft: minimaal ingelogd
+                                .anyRequest().authenticated()
                 )
                 .build();
     }
@@ -119,7 +104,8 @@ public class SecurityConfigOauth {
             public Collection<GrantedAuthority> convert(Jwt source) {
                 Collection<GrantedAuthority> grantedAuthorities = new ArrayList<>();
                 for (String authority : getAuthorities(source)) {
-                    grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + authority));//grantedAuthorities.add(new SimpleGrantedAuthority( authority));
+//                    grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + authority));//
+                    grantedAuthorities.add(new SimpleGrantedAuthority( authority));
                 }
                 return grantedAuthorities;
             }

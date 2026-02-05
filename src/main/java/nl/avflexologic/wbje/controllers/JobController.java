@@ -1,5 +1,7 @@
 package nl.avflexologic.wbje.controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -11,10 +13,16 @@ import jakarta.validation.Valid;
 import nl.avflexologic.wbje.dtos.error.ApiErrorDTO;
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
+import nl.avflexologic.wbje.services.CylinderService;
+import nl.avflexologic.wbje.services.JobAssemblyService;
 import nl.avflexologic.wbje.services.JobService;
+import nl.avflexologic.wbje.services.ReportService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST controller that exposes Job operations for the WBJE API.
@@ -29,15 +37,21 @@ import java.util.List;
 @Tag(name = "Jobs", description = "Endpoints for managing jobs in the Web Based Job Editor.")
 public class JobController {
 
-    private final JobService jobService;
+//    private final JobService jobService;
 
     /**
      * Constructs a new instance of the JobController with the required service dependency.
      *
      * @param jobService service responsible for job-related business logic
      */
-    public JobController(JobService jobService) {
+    private final JobService jobService;
+    private final JobAssemblyService jobAssemblyService;
+
+    public JobController(
+            JobService jobService, JobAssemblyService jobAssemblyService
+    ) {
         this.jobService = jobService;
+        this.jobAssemblyService = jobAssemblyService;
     }
 
     /**
@@ -395,4 +409,15 @@ public class JobController {
     public void deleteJob(@PathVariable Long id) {
         jobService.deleteJob(id);
     }
+
+
+    @PostMapping("/full")
+    public ResponseEntity<JobResponseDTO> createFullJobFromJson(
+            @RequestBody Map<String, Object> body
+    ) {
+        JobResponseDTO response = jobAssemblyService.createFullJob(body);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+
 }
