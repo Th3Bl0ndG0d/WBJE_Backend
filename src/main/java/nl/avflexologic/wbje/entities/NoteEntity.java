@@ -29,4 +29,17 @@ public class NoteEntity {
     public void setJob(JobEntity job) { this.job = job; }
     public String getInfo() { return info; }
     public void setInfo(String info) { this.info = info; }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NoteEntity that = (NoteEntity) o;
+        return jobId != null && jobId.equals(that.jobId);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
 }

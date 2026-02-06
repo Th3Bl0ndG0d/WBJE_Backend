@@ -61,4 +61,18 @@ public class TapeSpecEntity {
     public void setInfo(String info) {
         this.info = info;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TapeSpecEntity that = (TapeSpecEntity) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
 }

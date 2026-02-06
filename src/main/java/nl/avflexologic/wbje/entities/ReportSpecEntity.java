@@ -61,4 +61,17 @@ public class ReportSpecEntity {
     public void setInfo(String info) {
         this.info = info;
     }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReportSpecEntity that = (ReportSpecEntity) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
 }

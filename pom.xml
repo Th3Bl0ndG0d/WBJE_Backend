@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Main Maven configuration file for the WBJE backend.
-  This file defines all build dependencies, plugins, lifecycle integrations,
-  and documentation-generation mechanisms required for the application.
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
-    <!--
-      Spring Boot parent POM.
-      Provides dependency management, plugin defaults, and standardized versions
-      aligned with the Spring Boot 4.x release train.
-    -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -26,17 +18,39 @@
     <name>WBJE</name>
     <description>WBJE</description>
 
-    <!-- Java language level -->
     <properties>
-        <java.version>25</java.version>
+        <java.version>17</java.version>
     </properties>
 
-    <!--
-      Core application dependencies.
-      These define the runtime behavior, controller layer, persistence, validation
-      and OpenAPI documentation support.
-    -->
+    <!-- FIX 1: Force correcte ByteBuddy versies, zodat Hibernate enhancer werkt -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>1.14.12</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>1.14.12</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+
+        <!-- FIX 2: verwijderde 1.17.8 versies → versie komt nu uit dependencyManagement -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>
@@ -44,50 +58,49 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JPA/Hibernate integration for database persistence -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- Spring Web MVC infrastructure for REST controllers -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
-        <!-- PostgreSQL JDBC driver (runtime only) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Spring Boot test utilities for JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Boot test utilities for MVC controllers -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!--
-          Spring Boot test starter.
-          Provides Spring Test, Mockito integration (incl. @MockBean), and JUnit Jupiter support.
-          Added to ensure @MockBean is available for controller tests.
-        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
             <exclusions>
-                <!-- Kept because the project already declares the engine explicitly. -->
                 <exclusion>
                     <groupId>org.junit.jupiter</groupId>
                     <artifactId>junit-jupiter-engine</artifactId>
@@ -95,101 +108,65 @@
             </exclusions>
         </dependency>
 
-        <!-- Bean Validation (Jakarta Validation) support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!--
-          Springdoc OpenAPI v3.
-          Automatically generates live OpenAPI documentation for all REST endpoints
-          and exposes Swagger UI under /swagger-ui.
-        -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>3.0.0</version>
         </dependency>
 
-        <!-- JUnit Jupiter engine for unit/integration testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Spring Security core -->
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- OAuth2 Resource Server support (JWT/Bearer) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
 
-
-         </dependencies>
+    </dependencies>
 
     <build>
         <plugins>
-
-            <!--
-              Spring Boot Maven Plugin.
-              This plugin builds executable JARs and (in this configuration)
-              starts/stops the Spring Boot application during the Maven lifecycle.
-              Used here to automatically expose the running API so that documentation
-              can be generated based on live OpenAPI output.
-            -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <executions>
-                    <!-- Automatically start Spring Boot before integration-test -->
                     <execution>
                         <id>start-wbje-for-docs</id>
                         <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>start</goal>
-                        </goals>
+                        <goals><goal>start</goal></goals>
                     </execution>
-
-                    <!-- Automatically stop Spring Boot after integration-test -->
                     <execution>
                         <id>stop-wbje-after-docs</id>
                         <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>stop</goal>
-                        </goals>
+                        <goals><goal>stop</goal></goals>
                     </execution>
                 </executions>
             </plugin>
 
-            <!--
-              Exec Maven Plugin.
-              This plugin executes system commands as part of the Maven lifecycle.
-              It is used here to:
-                1) Download the live OpenAPI specification from the running Spring Boot instance.
-                2) Generate a Redoc HTML documentation bundle from the OpenAPI YAML.
-              Both documents are stored inside the /target directory.
-            -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <executions>
 
-                    <!-- Fetch live OpenAPI YAML from http://localhost:8080 -->
                     <execution>
                         <id>generate-openapi-spec</id>
                         <phase>integration-test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
-                            <!-- PowerShell is used to perform a simple HTTP GET -->
                             <executable>powershell</executable>
                             <arguments>
                                 <argument>-Command</argument>
@@ -200,15 +177,11 @@
                         </configuration>
                     </execution>
 
-                    <!-- Build Redoc HTML documentation from the generated openapi.yaml -->
                     <execution>
                         <id>generate-openapi-html-docs</id>
                         <phase>integration-test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
+                        <goals><goal>exec</goal></goals>
                         <configuration>
-                            <!-- Redocly CLI is executed via npx to avoid global installs -->
                             <executable>npx</executable>
                             <arguments>
                                 <argument>@redocly/cli</argument>
@@ -223,11 +196,6 @@
                 </executions>
             </plugin>
 
-            <!--
-              Maven Dependency Plugin.
-              Used here to resolve the Mockito agent JAR during test compilation.
-              Required due to the project's test configuration.
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -236,9 +204,7 @@
                     <execution>
                         <id>resolve-mockito-agent-path</id>
                         <phase>test-compile</phase>
-                        <goals>
-                            <goal>build-classpath</goal>
-                        </goals>
+                        <goals><goal>build-classpath</goal></goals>
                         <configuration>
                             <includeGroupIds>org.mockito</includeGroupIds>
                             <includeArtifactIds>mockito-core</includeArtifactIds>
@@ -249,30 +215,23 @@
                 </executions>
             </plugin>
 
-            <!--
-              Maven Surefire Plugin.
-              Manages the execution of unit tests.
-              Configuration is minimal because test behavior is handled elsewhere.
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
-                <configuration>
-                    <!-- Optional: Java agent can be enabled for Mockito if required -->
-                    <!-- <argLine>-javaagent:"${mockito.agent.path}"</argLine> -->
-                </configuration>
             </plugin>
+
+            <!-- FIX 3: Java 17 correct ingesteld (i.p.v. foutieve 25) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>25</source>
-                    <target>25</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
 
         </plugins>
     </build>
-</project>
 
+</project>

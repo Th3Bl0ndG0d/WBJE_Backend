@@ -2,6 +2,7 @@ package nl.avflexologic.wbje.controllers;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,9 +27,12 @@ public class SecurityController {
     }
 
     @GetMapping("/hello")
-    public String hallo(Authentication authentication){
-        String naam = authentication.getName();
-        return "Hallo " + naam;
+    public String hallo(JwtAuthenticationToken token){
+//        String naam = authentication.getName();
+        // Gebruik Keycloak preferred_username als principal
+        String username = token.getToken().getClaimAsString("preferred_username");
+        return "Hallo " + username;
+//        return "Hallo " + naam;
     }
     @GetMapping("/roles")
     public List<String> roles(Authentication authentication) {
