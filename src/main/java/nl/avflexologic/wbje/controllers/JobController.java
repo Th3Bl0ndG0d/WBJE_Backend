@@ -411,13 +411,13 @@ public class JobController {
     }
 
 
-    @PostMapping("/full")
-    public ResponseEntity<JobResponseDTO> createFullJobFromJson(
-            @RequestBody Map<String, Object> body
-    ) {
-        JobResponseDTO response = jobAssemblyService.createFullJob(body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+//    @PostMapping("/full")
+//    public ResponseEntity<JobResponseDTO> createFullJobFromJson(
+//            @RequestBody Map<String, Object> body
+//    ) {
+//        JobResponseDTO response = jobAssemblyService.createFullJob(body);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+//    }
 
 
 }
