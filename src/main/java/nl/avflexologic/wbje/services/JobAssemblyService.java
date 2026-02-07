@@ -204,7 +204,7 @@ public class JobAssemblyService {
      */
     private ReportSpecEntity createDefaultReportSpec(JsonNode reportNode) {
         ReportSpecEntity reportSpec = new ReportSpecEntity();
-        // TODO: pas onderstaande setters aan naar jouw echte entity-velden
+        // TODO: pas onderstaande setters aan naar echte entity-velden
 
         // Voorbeeld (als je zulke velden hebt):
         // reportSpec.setName("Auto-generated ReportSpec " + reportNode.get("reportNr").asInt());

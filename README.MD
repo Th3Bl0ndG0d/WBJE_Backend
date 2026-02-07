@@ -524,12 +524,17 @@ Wanneer Keycloak voor de eerste keer wordt opgestart:
 
 ### 4.5 Importeren van de WBJE-realm
 
-1. Start Keycloak
-2. Open Admin Console
-3. Links bovenin → Realm selector → **Create Realm**
-4. Kies: **Import**
-5. Upload `WBJE_realm-export.json`
-6. Na import is de volledige security-configuratie beschikbaar
+1. Start Keycloak.
+2. Open de **Admin Console**.
+3. Links bovenin → Realm selector → klik op **Create realm**.
+4. In het scherm **Create realm**:
+    - Onder **Import from resource file** klik je op **Browse…**.
+    - Selecteer het bestand `WBJE_realm-export.json`.
+    - De realmnaam wordt automatisch ingevuld (of vul `WBJE` in wanneer dit niet gebeurt).
+    - Zorg dat de slider **Enabled** direct op **ON** gezet wordt.
+5. Klik op **Create** om de realm aan te maken op basis van het geïmporteerde bestand.
+
+Na deze stappen is de volledige WBJE-securityconfiguratie (rollen, clients, realm-instellingen) actief en klaar voor gebruik.
 
 ---
 
@@ -583,7 +588,7 @@ Gebruik hiervoor bijvoorbeeld psql:
 
 ```sql
 CREATE DATABASE wbje;
-CREATE USER wbje_user WITH ENCRYPTED PASSWORD 'password';
+CREATE USER postgres WITH ENCRYPTED PASSWORD 'password';
 GRANT ALL PRIVILEGES ON DATABASE wbje TO postgres;
 ```
 
@@ -601,25 +606,46 @@ spring.datasource.password=password
 
 ### 4.8 API starten via IntelliJ
 
-1. Clone het project via GitHub en open IntelliJ IDEA.
-2. Kies **File → Open…** en selecteer de hoofdmap van het project.
-   IntelliJ herkent automatisch de aanwezige `pom.xml` en importeert het project als Maven-project.
-3. Controleer rechtsonder of IntelliJ aangeeft dat alle Maven-dependencies succesvol zijn geladen  
-   *(“Maven projects imported” of geen rode foutmeldingen in de Maven Tool Window).*
-4. Open de klasse **WbjeApplication.java** (het Spring Boot ingangspunt).
-5. Start de API via **Run → Run 'WbjeApplication'** of via de groene run-knop in IntelliJ.
 
-De API is daarna beschikbaar op:
+Het project kan op meerdere manieren in IntelliJ IDEA worden geopend: rechtstreeks vanuit de repository, via een lokale projectmap, of via een pull request. Voor alle opties geldt dezelfde vervolgstap om de API te starten.
 
-`http://localhost:8080`
+---
+
+### Project openen
+
+1. Open **IntelliJ IDEA**.
+2. Kies één van de volgende opties:
+    - **File → Open…** en selecteer de projectmap,
+    - **Git → Clone…** en vul de repository-URL in,
+    - **Git → GitHub → View Pull Requests** en kies **Checkout Pull Request**.
+3. IntelliJ herkent automatisch de `pom.xml` en importeert het Maven‑project.
+4. Wacht tot rechtsonder **“Maven project imported”** verschijnt.
+
+---
+
+### De WBJE API starten
+
+1. Navigeer naar:
+   ```
+   src/main/java/.../WbjeApplication.java
+   ```
+2. Open dit bestand.
+3. Start de applicatie via:
+    - **Right‑click → Run 'WbjeApplication'**, of
+    - De **groene Run‑knop**.
+4. Nadat de applicatie is gestart, is de API bereikbaar op:
+   ```
+   http://localhost:8080
+   ```
+
+Met deze stappen kan de WBJE‑backend eenvoudig lokaal worden uitgevoerd, ongeacht hoe het project is geladen.
+
 
 ---
 
 <a id="4-9-swagger-en-openapi"></a>
 
 ### 4.9 Swagger en OpenAPI
-
-## 4.9 Swagger en OpenAPI
 
 Swagger en OpenAPI vormen de auto-gegenereerde documentatie van de WBJE-API.  
 Wanneer de Spring Boot-applicatie draait, wordt automatisch een complete en interactieve UI beschikbaar gesteld via Swagger. Hiermee kun je:
@@ -711,13 +737,74 @@ De collectie bevat per request een OAuth2-configuratie met de volgende parameter
 
 ---
 
-### Gebruikers
+### Rollen & Autorisatie (RBAC)
 
-| Gebruiker | Rechten |
+De Web Based Job Editor (WBJE) maakt gebruik van Keycloak voor authenticatie en autorisatie.  
+Binnen deze applicatie bestaan twee functionele rollen:
+
+| Keycloak Rol | Beschrijving |
 | --- | --- |
-| **operator** | Jobs inzien, aanmaken, wijzigen |
-| **admin** | Alle rechten + beheerfunctionaliteit |
+| **ROLE_ADMIN** | Volledige beheertoegang. Mag alle entiteiten inclusief configuratie-objecten (TapeSpecs, ReportSpecs, Templates) aanmaken, wijzigen en verwijderen. |
+| **ROLE_USER** | Operator-rechten. Mag alle operationele entiteiten (Jobs, Cylinders, Reports) volledig beheren (CRUD). Mag configuratie-objecten uitsluitend lezen. |
 
+## 👥 Testgebruikers
+
+Voor testen met Swagger UI, Postman en de frontend kunnen de volgende Keycloak-gebruikers worden gebruikt:
+
+| Username | Password | Toegewezen rol |
+| --- | --- | --- |
+| **Operator** | `password` | **ROLE_USER** |
+| **Service** | `password` | **ROLE_ADMIN** |
+
+---
+
+## Role-Endpoint Matrix
+
+Onderstaande tabel toont per endpoint en HTTP-methode welke rol toegang heeft.
+
+> **Legenda:**  
+> ✔ = toegang toegestaan  
+> ✖ = geen toegang
+
+| Endpoint | Methode | ROLE_ADMIN (Service) | ROLE_USER (Operator) |
+| --- | --- | --- | --- |
+| `/tape-specs` | GET | ✔   | ✔   |
+| `/tape-specs` | POST | ✔   | ✖   |
+| `/tape-specs/{id}` | GET | ✔   | ✔   |
+| `/tape-specs/{id}` | PUT | ✔   | ✖   |
+| `/tape-specs/{id}` | DELETE | ✔   | ✖   |
+| `/report-specs` | GET | ✔   | ✔   |
+| `/report-specs` | POST | ✔   | ✖   |
+| `/report-specs/{id}` | GET | ✔   | ✔   |
+| `/report-specs/{id}` | PUT | ✔   | ✖   |
+| `/report-specs/{id}` | DELETE | ✔   | ✖   |
+| `/reports` | GET | ✔   | ✔   |
+| `/reports` | POST | ✔   | ✔   |
+| `/reports/{id}` | GET | ✔   | ✔   |
+| `/reports/{id}` | PUT | ✔   | ✔   |
+| `/reports/{id}` | DELETE | ✔   | ✔   |
+| `/jobs` | GET | ✔   | ✔   |
+| `/jobs` | POST | ✔   | ✔   |
+| `/jobs/{id}` | GET | ✔   | ✔   |
+| `/jobs/{id}` | PUT | ✔   | ✔   |
+| `/jobs/{id}` | DELETE | ✔   | ✔   |
+| `/jobs/full` | POST | ✔   | ✔   |
+| `/jobs/{jobId}/cylinders` | GET | ✔   | ✔   |
+| `/jobs/{jobId}/cylinders` | POST | ✔   | ✔   |
+| `/jobs/{jobId}/cylinders/{cylinderId}` | GET | ✔   | ✔   |
+| `/jobs/{jobId}/cylinders/{cylinderId}` | PUT | ✔   | ✔   |
+| `/jobs/{jobId}/cylinders/{cylinderId}` | DELETE | ✔   | ✔   |
+| `/job-templates` | GET | ✔   | ✔   |
+| `/job-templates` | POST | ✔   | ✖   |
+| `/job-templates/{id}` | GET | ✔   | ✔   |
+| `/job-templates/{id}` | DELETE | ✔   | ✖   |
+| `/job-templates/{id}/download` | GET | ✔   | ✔   |
+| `/public` | GET | ✔   | ✔   |
+| `/private` | GET | ✖   | ✔   |
+| `/admin` | GET | ✔   | ✖   |
+| `/roles` | GET | ✔   | ✔   |
+| `/hello` | GET | ✔   | ✔   |
+| `/debug-auth` | GET | ✔   | ✔   |
 ---
 
 ### Tokens verversen
