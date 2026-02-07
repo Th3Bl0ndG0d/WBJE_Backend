@@ -1,80 +1,10 @@
-//package nl.avflexologic.wbje.controllers;
-//
-//import io.swagger.v3.oas.annotations.Operation;
-//import io.swagger.v3.oas.annotations.tags.Tag;
-//import jakarta.validation.Valid;
-//import nl.avflexologic.wbje.dtos.cylinder.CylinderRequestDTO;
-//import nl.avflexologic.wbje.dtos.cylinder.CylinderResponseDTO;
-//import nl.avflexologic.wbje.services.CylinderService;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//
-//import java.util.List;
-//
-//@Tag(
-//        name = "Cylinders",
-//        description = "Operations related to cylinders within a job"
-//)
-//@RestController
-//@RequestMapping("/jobs/{jobId}/cylinders")
-//public class CylinderController {
-//
-//    private final CylinderService cylinderService;
-//
-//    public CylinderController(CylinderService cylinderService) {
-//        this.cylinderService = cylinderService;
-//    }
-//
-//    @Operation(
-//            summary = "Create a cylinder for a job",
-//            description = "Creates a new cylinder within the given job. " +
-//                    "Cylinder numbers must be unique per job."
-//    )
-//    @PostMapping
-//    public ResponseEntity<CylinderResponseDTO> createCylinder(
-//            @PathVariable Long jobId,
-//            @Valid @RequestBody CylinderRequestDTO request
-//    ) {
-//        CylinderResponseDTO response =
-//                cylinderService.createCylinder(jobId, request);
-//
-//        return ResponseEntity
-//                .status(HttpStatus.CREATED)
-//                .body(response);
-//    }
-//
-//    @Operation(
-//            summary = "Get all cylinders for a job",
-//            description = "Returns all cylinders that belong to the specified job."
-//    )
-//    @GetMapping
-//    public ResponseEntity<List<CylinderResponseDTO>> getCylindersByJob(
-//            @PathVariable Long jobId
-//    ) {
-//        return ResponseEntity.ok(
-//                cylinderService.getCylindersByJob(jobId)
-//        );
-//    }
-//
-//    @Operation(
-//            summary = "Get a single cylinder",
-//            description = "Returns a specific cylinder by id, scoped to the given job."
-//    )
-//    @GetMapping("/{cylinderId}")
-//    public ResponseEntity<CylinderResponseDTO> getCylinderById(
-//            @PathVariable Long jobId,
-//            @PathVariable Long cylinderId
-//    ) {
-//        return ResponseEntity.ok(
-//                cylinderService.getCylinderById(jobId, cylinderId)
-//        );
-//    }
-//}
 package nl.avflexologic.wbje.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.*;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -109,7 +39,7 @@ public class CylinderController {
 
     @Operation(
             summary = "Create a new cylinder",
-            description = "Creates a new cylinder in the specified job. Cylinder numbering must remain unique.",
+            description = "Creates a new cylinder in the specified job. Cylinder numbering must remain unique per job.",
             security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
     )
     @ApiResponses({
@@ -122,101 +52,88 @@ public class CylinderController {
                             examples = @ExampleObject(
                                     name = "CylinderCreatedExample",
                                     value = """
-                                    {
-                                      "id": 10,
-                                      "cylinderNumber": 3,
-                                      "webPosition": 125.0,
-                                      "diameter": 620.5,
-                                      "sidelay": 2.5,
-                                      "reports": []
-                                    }
-                                    """
+                                            {
+                                              "id": 10,
+                                              "cylinderNr": 1,
+                                              "color": "Cyan",
+                                              "cylinderInfo": "TechSleeve",
+                                              "jobId": 100,
+                                              "tapeSpecId": 10
+                                            }
+                                            """
                             )
                     )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Validation failed.",
+                    description = "Validation failed for the request body.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderValidationErrorExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 400,
-                                      "error": "Bad Request",
-                                      "message": "Validation failed.",
-                                      "path": "/jobs/1/cylinders",
-                                      "fieldErrors": {
-                                        "cylinderNumber": "must be positive"
-                                      }
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 400,
+                                              "error": "Bad Request",
+                                              "message": "Validation failed for one or more fields.",
+                                              "path": "/jobs/100/cylinders",
+                                              "fieldErrors": {
+                                                "cylinderNr": "cylinderNr is required.",
+                                                "tapeSpecId": "tapeSpecId is required."
+                                              }
+                                            }
+                                            """
                             )
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Job not found.",
+                    description = "Job not found for the given id.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderJobNotFoundExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 404,
-                                      "error": "Not Found",
-                                      "message": "Job not found for id: 1",
-                                      "path": "/jobs/1/cylinders",
-                                      "fieldErrors": null
-                                    }
-                                    """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Cylinder number already exists.",
-                    content = @Content(
-                            schema = @Schema(implementation = ApiErrorDTO.class),
-                            examples = @ExampleObject(
-                                    value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 409,
-                                      "error": "Conflict",
-                                      "message": "Cylinder number already exists in job.",
-                                      "path": "/jobs/1/cylinders",
-                                      "fieldErrors": null
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 404,
+                                              "error": "Not Found",
+                                              "message": "Job not found for id: 100",
+                                              "path": "/jobs/100/cylinders",
+                                              "fieldErrors": null
+                                            }
+                                            """
                             )
                     )
             )
     })
     @RequestBody(
-            description = "Cylinder request payload.",
+            description = "Cylinder request payload for creating a new cylinder within a job.",
             required = true,
             content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = CylinderRequestDTO.class),
                     examples = @ExampleObject(
+                            name = "CylinderRequestExample",
                             value = """
-                            {
-                              "cylinderNumber": 3,
-                              "webPosition": 125.0,
-                              "diameter": 620.5,
-                              "sidelay": 2.5
-                            }
-                            """
+                                    {
+                                      "cylinderNr": 1,
+                                      "color": "Cyan",
+                                      "cylinderInfo": "TechSleeve",
+                                      "tapeSpecId": 10
+                                    }
+                                    """
                     )
             )
     )
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<CylinderResponseDTO> createCylinder(
             @PathVariable Long jobId,
-            @Valid @RequestBody CylinderRequestDTO request
+            @Valid @org.springframework.web.bind.annotation.RequestBody CylinderRequestDTO request
     ) {
         CylinderResponseDTO response = cylinderService.createCylinder(jobId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -239,53 +156,59 @@ public class CylinderController {
                             mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = CylinderResponseDTO.class)),
                             examples = @ExampleObject(
+                                    name = "CylinderListExample",
                                     value = """
-                                    [
-                                      {
-                                        "id": 10,
-                                        "cylinderNumber": 3,
-                                        "webPosition": 125.0,
-                                        "diameter": 620.5,
-                                        "sidelay": 2.5,
-                                        "reports": []
-                                      },
-                                      {
-                                        "id": 11,
-                                        "cylinderNumber": 4,
-                                        "webPosition": 210.0,
-                                        "diameter": 618.0,
-                                        "sidelay": 1.5,
-                                        "reports": []
-                                      }
-                                    ]
-                                    """
+                                            [
+                                              {
+                                                "id": 10,
+                                                "cylinderNr": 1,
+                                                "color": "Cyan",
+                                                "cylinderInfo": "TechSleeve",
+                                                "jobId": 100,
+                                                "tapeSpecId": 10
+                                              },
+                                              {
+                                                "id": 11,
+                                                "cylinderNr": 2,
+                                                "color": "Cyan",
+                                                "cylinderInfo": "TechSleeve",
+                                                "jobId": 100,
+                                                "tapeSpecId": 10
+                                              }
+                                            ]
+                                            """
                             )
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Job not found.",
+                    description = "Job not found for the given id.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderJobNotFoundListExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 404,
-                                      "error": "Not Found",
-                                      "message": "Job not found for id: 1",
-                                      "path": "/jobs/1/cylinders",
-                                      "fieldErrors": null
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 404,
+                                              "error": "Not Found",
+                                              "message": "Job not found for id: 100",
+                                              "path": "/jobs/100/cylinders",
+                                              "fieldErrors": null
+                                            }
+                                            """
                             )
                     )
             )
     })
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @GetMapping
-    public List<CylinderResponseDTO> getCylindersByJob(@PathVariable Long jobId) {
-        return cylinderService.getCylindersByJob(jobId);
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<List<CylinderResponseDTO>> getCylindersByJob(
+            @PathVariable Long jobId
+    ) {
+        List<CylinderResponseDTO> cylinders = cylinderService.getCylindersByJob(jobId);
+        return ResponseEntity.ok(cylinders);
     }
 
     // ========================================================================
@@ -293,8 +216,8 @@ public class CylinderController {
     // ========================================================================
 
     @Operation(
-            summary = "Get a cylinder by id",
-            description = "Returns a single cylinder identified by its ID.",
+            summary = "Get a single cylinder",
+            description = "Returns a specific cylinder by id, scoped to the given job.",
             security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
     )
     @ApiResponses({
@@ -302,48 +225,53 @@ public class CylinderController {
                     responseCode = "200",
                     description = "Cylinder retrieved successfully.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = CylinderResponseDTO.class),
                             examples = @ExampleObject(
+                                    name = "SingleCylinderExample",
                                     value = """
-                                    {
-                                      "id": 10,
-                                      "cylinderNumber": 3,
-                                      "webPosition": 125.0,
-                                      "diameter": 620.5,
-                                      "sidelay": 2.5,
-                                      "reports": []
-                                    }
-                                    """
+                                            {
+                                              "id": 10,
+                                              "cylinderNr": 1,
+                                              "color": "Cyan",
+                                              "cylinderInfo": "TechSleeve",
+                                              "jobId": 100,
+                                              "tapeSpecId": 10
+                                            }
+                                            """
                             )
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Cylinder not found.",
+                    description = "Cylinder or job not found.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderNotFoundExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 404,
-                                      "error": "Not Found",
-                                      "message": "Cylinder not found for id: 10",
-                                      "path": "/jobs/1/cylinders/10",
-                                      "fieldErrors": null
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 404,
+                                              "error": "Not Found",
+                                              "message": "Cylinder not found for id: 10",
+                                              "path": "/jobs/100/cylinders/10",
+                                              "fieldErrors": null
+                                            }
+                                            """
                             )
                     )
             )
     })
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @GetMapping("/{cylinderId}")
-    public CylinderResponseDTO getCylinderById(
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<CylinderResponseDTO> getCylinderById(
             @PathVariable Long jobId,
             @PathVariable Long cylinderId
     ) {
-        return cylinderService.getCylinderById(jobId, cylinderId);
+        CylinderResponseDTO response = cylinderService.getCylinderById(jobId, cylinderId);
+        return ResponseEntity.ok(response);
     }
 
     // ========================================================================
@@ -355,93 +283,102 @@ public class CylinderController {
             description = "Updates the fields of an existing cylinder.",
             security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
     )
-    @RequestBody(
-            description = "Cylinder update payload.",
-            required = true,
-            content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = CylinderRequestDTO.class),
-                    examples = @ExampleObject(
-                            value = """
-                                    {
-                                      "cylinderNumber": 3,
-                                      "webPosition": 130.0,
-                                      "diameter": 621.0,
-                                      "sidelay": 1.5
-                                    }
-                                    """
-                    )
-            )
-    )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Cylinder updated successfully.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = CylinderResponseDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderUpdatedExample",
                                     value = """
-                                    {
-                                      "id": 10,
-                                      "cylinderNumber": 3,
-                                      "webPosition": 130.0,
-                                      "diameter": 621.0,
-                                      "sidelay": 1.5,
-                                      "reports": []
-                                    }
-                                    """
+                                            {
+                                              "id": 10,
+                                              "cylinderNr": 1,
+                                              "color": "Cyan",
+                                              "cylinderInfo": "TechSleeve",
+                                              "jobId": 100,
+                                              "tapeSpecId": 10
+                                            }
+                                            """
                             )
                     )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Validation failed.",
+                    description = "Validation failed for the request body.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderUpdateValidationErrorExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 400,
-                                      "error": "Bad Request",
-                                      "message": "Validation failed.",
-                                      "path": "/jobs/1/cylinders/10",
-                                      "fieldErrors": {
-                                        "webPosition": "must be positive"
-                                      }
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 400,
+                                              "error": "Bad Request",
+                                              "message": "Validation failed for one or more fields.",
+                                              "path": "/jobs/100/cylinders/10",
+                                              "fieldErrors": {
+                                                "cylinderNr": "cylinderNr is required.",
+                                                "tapeSpecId": "tapeSpecId is required."
+                                              }
+                                            }
+                                            """
                             )
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Cylinder not found.",
+                    description = "Cylinder or job not found.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderUpdateNotFoundExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 404,
-                                      "error": "Not Found",
-                                      "message": "Cylinder not found for id: 10",
-                                      "path": "/jobs/1/cylinders/10",
-                                      "fieldErrors": null
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 404,
+                                              "error": "Not Found",
+                                              "message": "Cylinder not found for id: 10",
+                                              "path": "/jobs/100/cylinders/10",
+                                              "fieldErrors": null
+                                            }
+                                            """
                             )
                     )
             )
     })
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @RequestBody(
+            description = "Cylinder request payload for updating an existing cylinder.",
+            required = true,
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = CylinderRequestDTO.class),
+                    examples = @ExampleObject(
+                            name = "CylinderUpdateRequestExample",
+                            value = """
+                                    {
+                                      "cylinderNr": 1,
+                                      "color": "Cyan",
+                                      "cylinderInfo": "TechSleeve",
+                                      "tapeSpecId": 10
+                                    }
+                                    """
+                    )
+            )
+    )
     @PutMapping("/{cylinderId}")
-    public CylinderResponseDTO updateCylinder(
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<CylinderResponseDTO> updateCylinder(
             @PathVariable Long jobId,
             @PathVariable Long cylinderId,
-            @Valid @RequestBody CylinderRequestDTO request
+            @Valid @org.springframework.web.bind.annotation.RequestBody CylinderRequestDTO request
     ) {
-        return cylinderService.updateCylinder(jobId, cylinderId, request);
+        CylinderResponseDTO response = cylinderService.updateCylinder(jobId, cylinderId, request);
+        return ResponseEntity.ok(response);
     }
 
     // ========================================================================
@@ -457,34 +394,40 @@ public class CylinderController {
             @ApiResponse(
                     responseCode = "204",
                     description = "Cylinder successfully deleted.",
-                    content = @Content(examples = @ExampleObject(
-                            value = """
-                            // No content returned
-                            """
-                    ))
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "CylinderDeleteExample",
+                                    value = """
+                                            // No content is returned for a successful delete (HTTP 204).
+                                            """
+                            )
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Cylinder not found.",
+                    description = "Cylinder or job not found.",
                     content = @Content(
+                            mediaType = "application/json",
                             schema = @Schema(implementation = ApiErrorDTO.class),
                             examples = @ExampleObject(
+                                    name = "CylinderDeleteNotFoundExample",
                                     value = """
-                                    {
-                                      "timestamp": "2025-01-10T14:32:11.123",
-                                      "status": 404,
-                                      "error": "Not Found",
-                                      "message": "Cylinder not found for id: 10",
-                                      "path": "/jobs/1/cylinders/10",
-                                      "fieldErrors": null
-                                    }
-                                    """
+                                            {
+                                              "timestamp": "2025-01-10T14:32:11.123",
+                                              "status": 404,
+                                              "error": "Not Found",
+                                              "message": "Cylinder not found for id: 10",
+                                              "path": "/jobs/100/cylinders/10",
+                                              "fieldErrors": null
+                                            }
+                                            """
                             )
                     )
             )
     })
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @DeleteMapping("/{cylinderId}")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<Void> deleteCylinder(
             @PathVariable Long jobId,
             @PathVariable Long cylinderId
