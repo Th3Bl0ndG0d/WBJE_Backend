@@ -13,6 +13,5 @@ public interface CylinderRepository extends JpaRepository<CylinderEntity, Long> 
     List<CylinderEntity> findAllByJob_Id(Long jobId);
 
     Optional<CylinderEntity> findByIdAndJob_Id(Long cylinderId, Long jobId);
-
-    boolean existsByIdAndJob_Id(Long cylinderId, Long jobId);
+    boolean existsByTapeSpecId(Long tapeSpecId);
 }

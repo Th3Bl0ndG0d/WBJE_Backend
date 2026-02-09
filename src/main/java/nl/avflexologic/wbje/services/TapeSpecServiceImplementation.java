@@ -3,8 +3,10 @@ package nl.avflexologic.wbje.services;
 import nl.avflexologic.wbje.dtos.tape.TapeSpecRequestDTO;
 import nl.avflexologic.wbje.dtos.tape.TapeSpecResponseDTO;
 import nl.avflexologic.wbje.entities.TapeSpecEntity;
+import nl.avflexologic.wbje.exceptions.EntityInUseException;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.TapeSpecDTOMapper;
+import nl.avflexologic.wbje.repositories.CylinderRepository;
 import nl.avflexologic.wbje.repositories.TapeSpecRepository;
 import org.springframework.stereotype.Service;
 
@@ -18,14 +20,18 @@ public class TapeSpecServiceImplementation implements TapeSpecService {
 
     private final TapeSpecRepository tapeSpecRepository;
     private final TapeSpecDTOMapper tapeSpecDTOMapper;
-
+    private final CylinderRepository cylinderRepository;
     /**
      * Creates a new service instance with required dependencies.
      */
-    public TapeSpecServiceImplementation(TapeSpecRepository tapeSpecRepository, TapeSpecDTOMapper tapeSpecDTOMapper) {
+    public TapeSpecServiceImplementation(TapeSpecRepository tapeSpecRepository,
+                                         TapeSpecDTOMapper tapeSpecDTOMapper,
+                                         CylinderRepository cylinderRepository) {
         this.tapeSpecRepository = tapeSpecRepository;
         this.tapeSpecDTOMapper = tapeSpecDTOMapper;
+        this.cylinderRepository = cylinderRepository;
     }
+
 
     /**
      * Creates and persists a new TapeSpec.
@@ -76,6 +82,11 @@ public class TapeSpecServiceImplementation implements TapeSpecService {
     public void deleteTapeSpec(Long id) {
         if (!tapeSpecRepository.existsById(id)) {
             throw new ResourceNotFoundException("TapeSpec not found for id: " + id);
+        }
+        if (cylinderRepository.existsByTapeSpecId(id)) {
+            throw new EntityInUseException(
+                    "Cannot delete TapeSpec " + id + " because it is still used by one or more cylinders."
+            );
         }
         tapeSpecRepository.deleteById(id);
     }
