@@ -6,10 +6,10 @@ sequenceDiagram
     participant AuthFilter as Auth/Role Check
     participant JobService
     participant CylinderService
-    participant PlateService
+    participant ReportService
     participant JobRepository
     participant CylinderRepository
-    participant PlateRepository
+    participant ReportRepository
 
 %% ========================
 %% 1) Happy flow
@@ -42,20 +42,20 @@ sequenceDiagram
     deactivate CylinderService
 
     loop For each cylinder
-        JobService->>PlateService: deletePlatesByCylinderId(cylinderId)
-        activate PlateService
+        JobService->>ReportService: deletereportsByCylinderId(cylinderId)
+        activate ReportService
 
-        PlateService->>PlateRepository: findAllByCylinderId(cylinderId)
-        activate PlateRepository
-        PlateRepository-->>PlateService: plates[]
-        deactivate PlateRepository
+        ReportService->>ReportRepository: findAllByCylinderId(cylinderId)
+        activate ReportRepository
+        ReportRepository-->>ReportService: reports[]
+        deactivate ReportRepository
 
         loop For each plate
-            PlateService->>PlateRepository: deleteById(plateId)
-            PlateRepository-->>PlateService: deleted
+            ReportService->>ReportRepository: deleteById(plateId)
+            ReportRepository-->>ReportService: deleted
         end
 
-        deactivate PlateService
+        deactivate ReportService
 
         JobService->>CylinderService: deleteCylinder(cylinderId)
         activate CylinderService

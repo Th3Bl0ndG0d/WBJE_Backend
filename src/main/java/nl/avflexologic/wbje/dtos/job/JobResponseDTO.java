@@ -1,8 +1,10 @@
 package nl.avflexologic.wbje.dtos.job;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import nl.avflexologic.wbje.dtos.cylinder.CylinderResponseDTO;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -45,5 +47,12 @@ public class JobResponseDTO {
 
     @Schema(description = "Optional operator note attached to the job.", example = "Repeat run, verify plate wear on station 2.")
     public String noteInfo;
+
+    // ===============================================================
+    // NEW: Complete full job hierarchy (cylinders → reports → plates → specs)
+    // ===============================================================
+
+    @Schema(description = "List of cylinders belonging to this job.")
+    public List<CylinderResponseDTO> cylinders;
 }
 

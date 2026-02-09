@@ -6,10 +6,10 @@ sequenceDiagram
     participant JobController
     participant JobService
     participant CylinderService
-    participant PlateService
+    participant ReportService
     participant JobRepository
     participant CylinderRepository
-    participant PlateRepository
+    participant ReportRepository
     participant JobDTOMapper
 
 %% =================================================
@@ -41,19 +41,19 @@ sequenceDiagram
     deactivate CylinderService
 
     loop For each cylinder in cylinders[]
-        JobService->>PlateService: getPlatesByCylinderId(cylinderId)
-        activate PlateService
-        PlateService->>PlateRepository: findAllByCylinderId(cylinderId)
-        activate PlateRepository
-        PlateRepository-->>PlateService: plates[]
-        deactivate PlateRepository
-        PlateService-->>JobService: plates[]
-        deactivate PlateService
+        JobService->>ReportService: getreportsByCylinderId(cylinderId)
+        activate ReportService
+        ReportService->>ReportRepository: findAllByCylinderId(cylinderId)
+        activate ReportRepository
+        ReportRepository-->>ReportService: reports[]
+        deactivate ReportRepository
+        ReportService-->>JobService: reports[]
+        deactivate ReportService
     end
 
-    Note right of JobService: Samenstellen hiërarchie<br/>(Job → Cylinders → Plates)<br/>in service-laag
+    Note right of JobService: Samenstellen hiërarchie<br/>(Job → Cylinders → reports)<br/>in service-laag
 
-    JobService->>JobDTOMapper: toResponseDTO(Job + cylinders + plates)
+    JobService->>JobDTOMapper: toResponseDTO(Job + cylinders + reports)
     activate JobDTOMapper
     JobDTOMapper-->>JobService: JobResponseDTO
     deactivate JobDTOMapper
