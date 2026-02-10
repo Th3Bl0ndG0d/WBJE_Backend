@@ -5,15 +5,19 @@ import nl.avflexologic.wbje.dtos.cylinder.CylinderResponseDTO;
 import nl.avflexologic.wbje.entities.CylinderEntity;
 import nl.avflexologic.wbje.entities.JobEntity;
 import nl.avflexologic.wbje.entities.TapeSpecEntity;
+import nl.avflexologic.wbje.exceptions.EntityInUseException;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.CylinderDTOMapper;
 import nl.avflexologic.wbje.repositories.CylinderRepository;
 import nl.avflexologic.wbje.repositories.JobRepository;
+import nl.avflexologic.wbje.repositories.ReportRepository;
 import nl.avflexologic.wbje.repositories.TapeSpecRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @Service
 @Transactional
@@ -23,7 +27,6 @@ public class CylinderServiceImplementation implements CylinderService {
     private final CylinderRepository cylinderRepository;
     private final TapeSpecRepository tapeSpecRepository;
     private final CylinderDTOMapper cylinderDTOMapper;
-
     public CylinderServiceImplementation(
             JobRepository jobRepository,
             CylinderRepository cylinderRepository,

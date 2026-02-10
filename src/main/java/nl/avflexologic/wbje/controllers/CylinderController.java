@@ -24,7 +24,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/jobs/{jobId}/cylinders")
-@Tag(name = "Cylinders", description = "Endpoints for managing cylinders within a job.")
+@Tag(
+        name = "Cylinders",
+        description = "Endpoints for managing cylinders within a job. Accessible roles: service (ROLE_ADMIN) and operator (ROLE_USER)."
+)
 public class CylinderController {
 
     private final CylinderService cylinderService;
@@ -39,8 +42,8 @@ public class CylinderController {
 
     @Operation(
             summary = "Create a new cylinder",
-            description = "Creates a new cylinder in the specified job. Cylinder numbering must remain unique per job.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Creates a new cylinder in the specified job. Cylinder numbering must remain unique per job. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
             @ApiResponse(
@@ -108,7 +111,9 @@ public class CylinderController {
                                             """
                             )
                     )
-            )
+            ),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed (e.g. duplicate cylinderNr or invalid TapeSpec relation)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @RequestBody(
             description = "Cylinder request payload for creating a new cylinder within a job.",
@@ -145,8 +150,8 @@ public class CylinderController {
 
     @Operation(
             summary = "Get all cylinders for a job",
-            description = "Returns all cylinders associated with the given job.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Returns all cylinders associated with the given job. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
             @ApiResponse(
@@ -217,8 +222,8 @@ public class CylinderController {
 
     @Operation(
             summary = "Get a single cylinder",
-            description = "Returns a specific cylinder by id, scoped to the given job.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Returns a specific cylinder by id, scoped to the given job. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
             @ApiResponse(
@@ -280,8 +285,8 @@ public class CylinderController {
 
     @Operation(
             summary = "Update a cylinder",
-            description = "Updates the fields of an existing cylinder.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Updates the fields of an existing cylinder. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
             @ApiResponse(
@@ -349,7 +354,9 @@ public class CylinderController {
                                             """
                             )
                     )
-            )
+            ),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed (invalid updates or incompatible specs)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @RequestBody(
             description = "Cylinder request payload for updating an existing cylinder.",
@@ -387,8 +394,8 @@ public class CylinderController {
 
     @Operation(
             summary = "Delete a cylinder",
-            description = "Deletes a cylinder belonging to the specified job.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Deletes a cylinder belonging to the specified job. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
             @ApiResponse(

@@ -12,7 +12,7 @@ import java.util.List;
 
 @Component
 public class CylinderDTOMapper {
-
+    private final ReportDTOMapper reportMapper = new ReportDTOMapper();
     public CylinderResponseDTO mapToDto(CylinderEntity cylinder) {
         if (cylinder == null) return null;
 
@@ -25,7 +25,12 @@ public class CylinderDTOMapper {
                 cylinder.getColor(),
                 cylinder.getCylinderInfo(),
                 jobId,
-                tapeSpecId
+                tapeSpecId,
+                (cylinder.getReports() == null)
+                        ? List.of()
+                        : cylinder.getReports().stream()
+                        .map(reportMapper::mapToDto)
+                        .toList()
         );
     }
 
@@ -52,8 +57,13 @@ public class CylinderDTOMapper {
         if (dto == null) return null;
 
         CylinderEntity cylinder = new CylinderEntity(job, tapeSpec, dto.cylinderNr());
-        cylinder.setColor(dto.color());
+//        cylinder.setColor(dto.color());
+//        cylinder.setCylinderInfo(dto.cylinderInfo());
+
+        cylinder.setCylinderNr(dto.cylinderNr());
         cylinder.setCylinderInfo(dto.cylinderInfo());
+        cylinder.setColor(dto.color());
+        cylinder.setTapeSpec(tapeSpec);
         return cylinder;
     }
 

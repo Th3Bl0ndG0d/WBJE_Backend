@@ -63,27 +63,70 @@ public class SecurityConfigOauth {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-                                // Debug-endpoints alleen voor ADMIN (Service)
-                                .requestMatchers("/debug-auth", "/roles").hasRole("ADMIN")
 
-                                // Admin-only API's (Service)
-                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // Debug-endpoints alleen voor ADMIN (Service)
+                        .requestMatchers("/debug-auth", "/roles").hasRole("ADMIN")
 
-                                // Jobbeheer – zowel Operator (USER) als Service (ADMIN)
-                                .requestMatchers(
-                                        "/jobs/**",
-                                        "/cylinders/**",
-                                        "/reports/**",
-                                        "/tapes/**"
-                                ).hasAnyRole("USER", "ADMIN")
+                        // Admin-only API's (Service)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                                // Job-templates – ook voor Operator en Service
-                                .requestMatchers("/job-templates/**").hasRole("ADMIN")
+                        // TapeSpec + ReportSpec matrix
+                        .requestMatchers(HttpMethod.GET, "/tape-specs/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/tape-specs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/tape-specs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/tape-specs/**").hasRole("ADMIN")
 
-                                // Alles wat overblijft: minimaal ingelogd
-                                .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/report-specs/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/report-specs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/report-specs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/report-specs/**").hasRole("ADMIN")
+
+                        // Jobbeheer – zowel Operator (USER) als Service (ADMIN)
+                        .requestMatchers("/jobs/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/cylinders/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/reports/**").hasAnyRole("USER", "ADMIN")
+
+                        // Job-templates matrix
+                        .requestMatchers(HttpMethod.GET, "/job-templates/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/job-templates/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/job-templates/**").hasRole("ADMIN")
+
+                        // Alles wat overblijft: minimaal ingelogd
+                        .anyRequest().authenticated()
                 )
                 .build();
+//                .
+//                authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/swagger-ui.html",
+//                                "/swagger-ui/**",
+//                                "/v3/api-docs",
+//                                "/v3/api-docs/**",
+//                                "/v3/api-docs.yaml",
+//                                "/swagger-resources/**",
+//                                "/webjars/**"
+//                        ).permitAll()
+//                                // Debug-endpoints alleen voor ADMIN (Service)
+//                                .requestMatchers("/debug-auth", "/roles").hasRole("ADMIN")
+//
+//                                // Admin-only API's (Service)
+//                                .requestMatchers("/admin/**").hasRole("ADMIN")
+//
+//                                // Jobbeheer – zowel Operator (USER) als Service (ADMIN)
+//                                .requestMatchers(
+//                                        "/jobs/**",
+//                                        "/cylinders/**",
+//                                        "/reports/**",
+//                                        "/tapes/**"
+//                                ).hasAnyRole("USER", "ADMIN")
+//
+//                                // Job-templates – ook voor Operator en Service
+//                                .requestMatchers("/job-templates/**").hasRole("ADMIN")
+//
+//                                // Alles wat overblijft: minimaal ingelogd
+//                                .anyRequest().authenticated()
+//                )
+//                .build();
     }
 
     public JwtDecoder jwtDecoder(){

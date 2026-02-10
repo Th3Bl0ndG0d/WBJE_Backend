@@ -3,8 +3,10 @@ package nl.avflexologic.wbje.services;
 import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecRequestDTO;
 import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecResponseDTO;
 import nl.avflexologic.wbje.entities.ReportSpecEntity;
+import nl.avflexologic.wbje.exceptions.EntityInUseException;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.ReportSpecDTOMapper;
+import nl.avflexologic.wbje.repositories.ReportRepository;
 import nl.avflexologic.wbje.repositories.ReportSpecRepository;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +20,14 @@ public class ReportSpecServiceImplementation implements ReportSpecService {
 
     private final ReportSpecRepository reportSpecRepository;
     private final ReportSpecDTOMapper reportSpecDTOMapper;
-
+    private final ReportRepository reportRepository;
     /**
      * Creates a new service instance with required dependencies.
      */
-    public ReportSpecServiceImplementation(ReportSpecRepository reportSpecRepository, ReportSpecDTOMapper reportSpecDTOMapper) {
+    public ReportSpecServiceImplementation(ReportSpecRepository reportSpecRepository, ReportSpecDTOMapper reportSpecDTOMapper, ReportRepository reportRepository) {
         this.reportSpecRepository = reportSpecRepository;
         this.reportSpecDTOMapper = reportSpecDTOMapper;
+        this.reportRepository = reportRepository;
     }
 
     @Override
@@ -61,6 +64,11 @@ public class ReportSpecServiceImplementation implements ReportSpecService {
     public void deleteReportSpec(Long id) {
         if (!reportSpecRepository.existsById(id)) {
             throw new ResourceNotFoundException("ReportSpec not found for id: " + id);
+        }
+        if (reportRepository.existsByReportSpecId(id)) {
+            throw new EntityInUseException(
+                    "Cannot delete ReportSpec " + id + " because it is still used by one or more reports."
+            );
         }
         reportSpecRepository.deleteById(id);
     }

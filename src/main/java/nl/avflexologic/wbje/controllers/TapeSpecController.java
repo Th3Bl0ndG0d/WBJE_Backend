@@ -22,7 +22,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tape-specs")
-@Tag(name = "Tape Specifications", description = "Endpoints for managing tape specifications.")
+@Tag(
+        name = "Tape Specifications",
+        description = "Endpoints for managing tape specifications. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER)."
+)
 public class TapeSpecController {
 
     private final TapeSpecService tapeSpecService;
@@ -32,17 +35,17 @@ public class TapeSpecController {
     }
 
     // =========================================================================
-    // CREATE (ADMIN ONLY)
+    // CREATE — ADMIN ONLY → service
     // =========================================================================
 
     @Operation(
             summary = "Create a new tape specification",
-            description = "Creates a new tape specification based on the supplied properties.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN"})
+            description = "Creates a new tape specification. Accessible role: service (ROLE_ADMIN).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service"})
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "TapeSpec successfully created.",
                     content = @Content(
                             mediaType = "application/json",
@@ -63,26 +66,11 @@ public class TapeSpecController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Validation failed.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ApiErrorDTO.class),
-                            examples = @ExampleObject(
-                                    name = "TapeSpecValidationErrorExample",
-                                    value = """
-                                            {
-                                              "timestamp": "2025-01-10T14:32:11.123",
-                                              "status": 400,
-                                              "error": "Bad Request",
-                                              "message": "tapeName is required",
-                                              "path": "/tape-specs",
-                                              "fieldErrors": {
-                                                "tapeName": "tapeName is required"
-                                              }
-                                            }
-                                            """
-                            )
-                    )
-            )
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiErrorDTO.class))
+            ),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed (invalid TapeSpec structure)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
+
     })
     @RequestBody(
             description = "Payload for creating a new TapeSpec.",
@@ -110,13 +98,13 @@ public class TapeSpecController {
     }
 
     // =========================================================================
-    // READ ALL (ADMIN + USER)
+    // GET ALL — ADMIN + USER → service + operator
     // =========================================================================
 
     @Operation(
             summary = "Get all tape specifications",
-            description = "Returns all tape specifications.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Returns all tape specifications. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponse(
             responseCode = "200",
@@ -152,13 +140,13 @@ public class TapeSpecController {
     }
 
     // =========================================================================
-    // READ ONE (ADMIN + USER)
+    // GET ONE — ADMIN + USER → service + operator
     // =========================================================================
 
     @Operation(
             summary = "Get a tape specification by id",
-            description = "Returns a single TapeSpec.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN", "USER"})
+            description = "Returns a single tape specification. Accessible roles: service (ROLE_ADMIN), operator (ROLE_USER).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
             @ApiResponse(
@@ -183,23 +171,7 @@ public class TapeSpecController {
             @ApiResponse(
                     responseCode = "404",
                     description = "TapeSpec not found.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ApiErrorDTO.class),
-                            examples = @ExampleObject(
-                                    name = "TapeSpecNotFoundExample",
-                                    value = """
-                                            {
-                                              "timestamp": "2025-01-10T14:32:11.123",
-                                              "status": 404,
-                                              "error": "Not Found",
-                                              "message": "TapeSpec not found for id: 99",
-                                              "path": "/tape-specs/99",
-                                              "fieldErrors": null
-                                            }
-                                            """
-                            )
-                    )
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiErrorDTO.class))
             )
     })
     @GetMapping("/{id}")
@@ -209,13 +181,13 @@ public class TapeSpecController {
     }
 
     // =========================================================================
-    // UPDATE (ADMIN ONLY)
+    // UPDATE — ADMIN ONLY → service
     // =========================================================================
 
     @Operation(
             summary = "Update a tape specification",
-            description = "Updates an existing TapeSpec.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN"})
+            description = "Updates an existing tape specification. Accessible role: service (ROLE_ADMIN).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service"})
     )
     @ApiResponses({
             @ApiResponse(
@@ -237,16 +209,11 @@ public class TapeSpecController {
                             )
                     )
             ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Validation error.",
-                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "TapeSpec not found.",
-                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class))
-            )
+            @ApiResponse(responseCode = "400", description = "Validation error."),
+            @ApiResponse(responseCode = "404", description = "TapeSpec not found."),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
+
     })
     @RequestBody(
             description = "Updated TapeSpec payload.",
@@ -275,21 +242,19 @@ public class TapeSpecController {
     }
 
     // =========================================================================
-    // DELETE (ADMIN ONLY)
+    // DELETE — ADMIN ONLY → service
     // =========================================================================
 
     @Operation(
             summary = "Delete a tape specification",
-            description = "Deletes the TapeSpec with the given id.",
-            security = @SecurityRequirement(name = "bearerAuth", scopes = {"ADMIN"})
+            description = "Deletes the TapeSpec with the given id. Accessible role: service (ROLE_ADMIN).",
+            security = @SecurityRequirement(name = "keycloak", scopes = {"service"})
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "TapeSpec deleted."),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "TapeSpec not found.",
-                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class))
-            )
+            @ApiResponse(responseCode = "204", description = "TapeSpec deleted."),
+            @ApiResponse(responseCode = "404", description = "TapeSpec not found."),
+            @ApiResponse(responseCode = "409", description = "TapeSpec is in use by one or more Cylinders (EntityInUseException)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

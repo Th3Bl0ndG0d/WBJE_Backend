@@ -45,7 +45,7 @@ public class JobDTOMapper {
             job.setNote(null);
         }
     }
-
+    private static final CylinderDTOMapper cylinderMapper = new CylinderDTOMapper();
     public static JobResponseDTO mapToDto(JobEntity job) {
         JobResponseDTO dto = new JobResponseDTO();
         dto.id = job.getId();
@@ -59,7 +59,11 @@ public class JobDTOMapper {
         if (job.getNote() != null) {
             dto.noteInfo = job.getNote().getInfo();
         }
-
+        if (job.getCylinders() != null && !job.getCylinders().isEmpty()) {
+            dto.cylinders = job.getCylinders().stream()
+                    .map(cylinderMapper::mapToDto)   // << jouw eigen mapper
+                    .toList();
+        }
         return dto;
     }
 }

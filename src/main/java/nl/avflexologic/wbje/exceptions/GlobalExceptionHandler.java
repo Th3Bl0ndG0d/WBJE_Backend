@@ -86,6 +86,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, status);
     }
 
+    @ExceptionHandler(EntityInUseException.class)
+    public ResponseEntity<ApiErrorDTO> handleEntityInUse(
+            EntityInUseException ex,
+            HttpServletRequest request) {
+        return new ResponseEntity<>(
+                buildError(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI()),
+                HttpStatus.CONFLICT
+        );
+    }
+
+
     /**
      * Creates a basic ApiErrorDTO instance for the given HTTP status and message.
      */

@@ -3,13 +3,12 @@ sequenceDiagram
 
     actor Client
     participant JobController
-    participant AuthFilter as Auth/Role Check
     participant JobService
     participant CylinderService
-    participant PlateService
+    participant ReportService
     participant JobRepository
     participant CylinderRepository
-    participant PlateRepository
+    participant ReportRepository
 
 %% ========================
 %% 1) Happy flow
@@ -17,10 +16,6 @@ sequenceDiagram
     Client->>JobController: DELETE /jobs/{id} (token)
     activate JobController
 
-    JobController->>AuthFilter: validateTokenAndRole(token)
-    activate AuthFilter
-    AuthFilter-->>JobController: OK
-    deactivate AuthFilter
 
     JobController->>JobService: deleteJob(id)
     activate JobService
@@ -42,20 +37,20 @@ sequenceDiagram
     deactivate CylinderService
 
     loop For each cylinder
-        JobService->>PlateService: deletePlatesByCylinderId(cylinderId)
-        activate PlateService
+        JobService->>ReportService: deletereportsByCylinderId(cylinderId)
+        activate ReportService
 
-        PlateService->>PlateRepository: findAllByCylinderId(cylinderId)
-        activate PlateRepository
-        PlateRepository-->>PlateService: plates[]
-        deactivate PlateRepository
+        ReportService->>ReportRepository: findAllByCylinderId(cylinderId)
+        activate ReportRepository
+        ReportRepository-->>ReportService: reports[]
+        deactivate ReportRepository
 
         loop For each plate
-            PlateService->>PlateRepository: deleteById(plateId)
-            PlateRepository-->>PlateService: deleted
+            ReportService->>ReportRepository: deleteById(plateId)
+            ReportRepository-->>ReportService: deleted
         end
 
-        deactivate PlateService
+        deactivate ReportService
 
         JobService->>CylinderService: deleteCylinder(cylinderId)
         activate CylinderService
@@ -84,11 +79,6 @@ sequenceDiagram
     alt Job not found
         Client->>JobController: DELETE /jobs/{id} (token)
         activate JobController
-
-        JobController->>AuthFilter: validateTokenAndRole(token)
-        activate AuthFilter
-        AuthFilter-->>JobController: OK
-        deactivate AuthFilter
 
         JobController->>JobService: deleteJob(id)
         activate JobService
