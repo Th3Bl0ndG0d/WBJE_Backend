@@ -3,7 +3,6 @@ sequenceDiagram
 
     actor Client
     participant JobController
-    participant AuthFilter as Auth/Role Check
     participant JobService
     participant CylinderService
     participant ReportService
@@ -17,10 +16,6 @@ sequenceDiagram
     Client->>JobController: DELETE /jobs/{id} (token)
     activate JobController
 
-    JobController->>AuthFilter: validateTokenAndRole(token)
-    activate AuthFilter
-    AuthFilter-->>JobController: OK
-    deactivate AuthFilter
 
     JobController->>JobService: deleteJob(id)
     activate JobService
@@ -84,11 +79,6 @@ sequenceDiagram
     alt Job not found
         Client->>JobController: DELETE /jobs/{id} (token)
         activate JobController
-
-        JobController->>AuthFilter: validateTokenAndRole(token)
-        activate AuthFilter
-        AuthFilter-->>JobController: OK
-        deactivate AuthFilter
 
         JobController->>JobService: deleteJob(id)
         activate JobService

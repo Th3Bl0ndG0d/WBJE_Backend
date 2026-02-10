@@ -59,7 +59,7 @@ public class JobController {
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "Job successfully created.",
                     content = @Content(
                             mediaType = "application/json",
@@ -79,10 +79,12 @@ public class JobController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Validation failed.",
+                    responseCode = "400", description = "Validation failed.",
                     content = @Content(schema = @Schema(implementation = ApiErrorDTO.class))
-            )
+            ),
+
+            @ApiResponse(responseCode = "422", description = "Domain validation failed (inconsistent job structure)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
@@ -149,9 +151,17 @@ public class JobController {
             security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Job updated."),
-            @ApiResponse(responseCode = "400", description = "Validation error."),
-            @ApiResponse(responseCode = "404", description = "Job not found.")
+            @ApiResponse(responseCode = "200", description = "Job updated",
+                    content = @Content(schema = @Schema(implementation = JobResponseDTO.class))),
+
+            @ApiResponse(responseCode = "400", description = "Invalid request data",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class))),
+
+            @ApiResponse(responseCode = "404", description = "Job not found",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class))),
+
+            @ApiResponse(responseCode = "422", description = "Domain validation failed",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
@@ -173,7 +183,8 @@ public class JobController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Job deleted."),
-            @ApiResponse(responseCode = "404", description = "Job not found.")
+            @ApiResponse(responseCode = "404", description = "Job not found",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")

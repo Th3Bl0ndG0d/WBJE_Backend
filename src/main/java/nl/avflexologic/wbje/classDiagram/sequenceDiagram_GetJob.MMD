@@ -2,7 +2,6 @@ sequenceDiagram
     autonumber
 
     actor Client
-    participant Security as SecurityFilterChain / Keycloak Auth
     participant JobController
     participant JobService
     participant CylinderService
@@ -15,13 +14,7 @@ sequenceDiagram
 %% =================================================
 %% 1) Happy flow
 %% =================================================
-    Client->>Security: GET /jobs/{id} (Authorization: Bearer <token>)
-    activate Security
-
-    Security->>Security: validate JWT + roles (Keycloak)
-    Security-->>JobController: forward request (OK)
-    deactivate Security
-
+    Client->>JobController: GET /jobs/{id} (geldig token)
     activate JobController
     JobController->>JobService: getJobById(id)
     activate JobService
@@ -65,44 +58,10 @@ sequenceDiagram
     deactivate JobController
 
 %% =================================================
-%% 2) Alternative flow: Authentication failed (401)
-%% =================================================
-    alt Authentication failed (invalid/missing token)
-        Client->>Security: GET /jobs/{id} (geen of fout token)
-        activate Security
-
-        Security->>Security: validate JWT
-        Security-->>Client: 401 Unauthorized
-        deactivate Security
-
-        Note right of Client: JobController wordt niet aangeroepen
-    end
-
-%% =================================================
-%% 3) Alternative flow: Authorization failed (403)
-%% =================================================
-    alt Authorization failed (role mismatch)
-        Client->>Security: GET /jobs/{id} (token zonder juiste rol)
-        activate Security
-
-        Security->>Security: validate JWT + roles
-        Security-->>Client: 403 Forbidden
-        deactivate Security
-
-        Note right of Client: JobController wordt niet aangeroepen
-    end
-
-%% =================================================
-%% 4) Alternative flow: Job not found (404)
+%% 2) Alternative flow: Job not found (404)
 %% =================================================
     alt Job not found
-        Client->>Security: GET /jobs/{id} (geldig token)
-        activate Security
-
-        Security->>Security: validate JWT + roles
-        Security-->>JobController: forward request (OK)
-        deactivate Security
-
+        Client->>JobController: GET /jobs/{id} (geldig token)
         activate JobController
         JobController->>JobService: getJobById(id)
         activate JobService

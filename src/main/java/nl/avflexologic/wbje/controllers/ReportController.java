@@ -401,7 +401,7 @@ public class ReportController {
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "Report successfully created.",
                     content = @Content(
                             mediaType = "application/json",
@@ -467,7 +467,10 @@ public class ReportController {
                                             """
                             )
                     )
-            )
+            ),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed (invalid ReportSpec or TapeSpec relation)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
+
     })
     @PostMapping
     public ReportResponseDTO createReport(@Valid @RequestBody ReportRequestDTO request) {
@@ -657,7 +660,9 @@ public class ReportController {
                                             """
                             )
                     )
-            )
+            ),@ApiResponse(responseCode = "422", description = "Domain validation failed (e.g. incompatible ReportSpec -> TapeSpec relation)",
+            content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
+
     })
     @PutMapping("/{id}")
     public ReportResponseDTO updateReport(
@@ -678,7 +683,7 @@ public class ReportController {
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "204",
                     description = "Report successfully deleted.",
                     content = @Content(
                             mediaType = "application/json",

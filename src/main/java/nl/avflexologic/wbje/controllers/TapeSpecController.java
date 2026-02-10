@@ -45,7 +45,7 @@ public class TapeSpecController {
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "TapeSpec successfully created.",
                     content = @Content(
                             mediaType = "application/json",
@@ -67,7 +67,10 @@ public class TapeSpecController {
                     responseCode = "400",
                     description = "Validation failed.",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiErrorDTO.class))
-            )
+            ),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed (invalid TapeSpec structure)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
+
     })
     @RequestBody(
             description = "Payload for creating a new TapeSpec.",
@@ -207,7 +210,10 @@ public class TapeSpecController {
                     )
             ),
             @ApiResponse(responseCode = "400", description = "Validation error."),
-            @ApiResponse(responseCode = "404", description = "TapeSpec not found.")
+            @ApiResponse(responseCode = "404", description = "TapeSpec not found."),
+            @ApiResponse(responseCode = "422", description = "Domain validation failed",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
+
     })
     @RequestBody(
             description = "Updated TapeSpec payload.",
@@ -245,8 +251,10 @@ public class TapeSpecController {
             security = @SecurityRequirement(name = "keycloak", scopes = {"service"})
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "TapeSpec deleted."),
-            @ApiResponse(responseCode = "404", description = "TapeSpec not found.")
+            @ApiResponse(responseCode = "204", description = "TapeSpec deleted."),
+            @ApiResponse(responseCode = "404", description = "TapeSpec not found."),
+            @ApiResponse(responseCode = "409", description = "TapeSpec is in use by one or more Cylinders (EntityInUseException)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

@@ -84,9 +84,7 @@ public class TapeSpecServiceImplementation implements TapeSpecService {
             throw new ResourceNotFoundException("TapeSpec not found for id: " + id);
         }
         if (cylinderRepository.existsByTapeSpecId(id)) {
-            throw new EntityInUseException(
-                    "Cannot delete TapeSpec " + id + " because it is still used by one or more cylinders."
-            );
+            throw new EntityInUseException("Cannot delete TapeSpec " + id + " because it is still used by one or more cylinders.");
         }
         tapeSpecRepository.deleteById(id);
     }
