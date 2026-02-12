@@ -639,7 +639,7 @@ http://localhost:8080/swagger-ui/index.html
 
 Het opent een interactieve webpagina zoals hieronder:
 
-![Swagger UI voorbeeld](https://via.placeholder.com/800x400?text=Swagger+UI+Example)
+![SwaggerUI](src/main/java/nl/avflexologic/wbje/screenshots/Swagger.png)
 
 ### OpenAPI YAML
 
@@ -659,6 +659,7 @@ Deze YAML-file kan worden gebruikt voor:
 
 Springdoc genereert deze YAML live op basis van controllers, DTO’s, validatie-annotaties en Swagger-configuratie.
 
+![YAML-file](src/main/java/nl/avflexologic/wbje/screenshots/YAML.png)
 
 ---
 
@@ -818,7 +819,7 @@ Line coverage geeft aan welk percentage van de broncode daadwerkelijk is uitgevo
 
 Binnen onder andere de servicelaag wordt 100% line coverage behaald.
 
-![Maven Lifecycle IntelliJ](images/xxxx.png)
+![100% Line Coverage](src/main/java/nl/avflexologic/wbje/screenshots/lineCoverage.png)
 
 Dit betekent dat alle codepaden in deze klassen minimaal één keer zijn uitgevoerd tijdens het testen. De kern van de businesslogica is hiermee volledig afgedekt en reproduceerbaar getest.
 
@@ -840,7 +841,7 @@ Alle tests kunnen worden uitgevoerd via IntelliJ IDEA of via het ingebouwde Mave
 2. Rechtsklik op de testmap.
 3. Kies **Run 'All Tests'**.
 
-![Maven Lifecycle IntelliJ](images/xxxx.png)
+![Run All Tests](src/main/java/nl/avflexologic/wbje/screenshots/RunAllTests.png)
 
 **Specifieke testklasse uitvoeren:**
 
@@ -848,7 +849,7 @@ Alle tests kunnen worden uitgevoerd via IntelliJ IDEA of via het ingebouwde Mave
 2. Rechtsklik in de editor.
 3. Kies **Run 'TestClassName'**.
 
-![Maven Lifecycle IntelliJ]()
+![Run All CylinderServiceImplementationTest](src/main/java/nl/avflexologic/wbje/screenshots/RunAllCylinderServiceImplementationTest.png)
 
 Succesvolle tests worden groen weergegeven in de testconsole.
 
@@ -865,7 +866,7 @@ Succesvolle tests worden groen weergegeven in de testconsole.
 
 Onderstaand voorbeeld toont het Maven-venster in IntelliJ met de Lifecycle-fases zichtbaar:
 
-![Maven Lifecycle IntelliJ](images/maven-lifecycle-tests.png)
+![Maven Lifecycle - Tests](src/main/java/nl/avflexologic/wbje/screenshots/Maven-lifecycle-tests.png)
 
 Voor dagelijkse ontwikkeling volstaat doorgaans **test**.  Voor een volledige controle vóór oplevering wordt **verify** aanbevolen.
 
