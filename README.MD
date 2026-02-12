@@ -64,27 +64,35 @@ Kernfunctionaliteiten:
 De backend hanteert een gelaagde architectuur waarin verantwoordelijkheden helder zijn gescheiden. Dit bevordert onderhoudbaarheid, testbaarheid en consistent gedrag over de gehele applicatie.
 
 ### Controllers
+
 Bevatten de REST-endpoints en verwerken inkomende verzoeken. Validatie vindt plaats op DTO-niveau. Controllers leveren bijna uitsluitend Response-DTO’s terug.
 
 ### Services
+
 Implementeert de domeinlogica en bewaakt de toepassingsregels. Services koppelen validatie, mapping en repository-interactie tot één samenhangend geheel.
 
 ### Repositories
+
 Spring Data JPA-interfaces voor persistency. Repositories abstraheren de database-interactie en leveren entiteiten aan de servicelaag.
 
 ### Entities
+
 JPA-entiteiten waarin de domeinstructuur en onderlinge relaties zijn gedefinieerd. Tabellen zijn één-op-één gerepresenteerd met de entiteiten.
 
 ### DTO’s (request/response)
+
 Datatransferobjecten die voorkomen dat interne entiteiten worden blootgesteld. Requests worden gevalideerd; responses bieden een gecontroleerde, stabiele datastructuur richting de client.
 
 ### Mappers
+
 Zorgen voor de omzetting tussen entiteiten en DTO’s. Dit houdt conversielogica buiten de controllers en services en maakt deze onderdelen eenvoudiger te testen.
 
 ### Configuratie
+
 Omvat beveiliging, OpenAPI, Jackson-instellingen en multipart-configuratie. Hiermee worden de generieke applicatie-eigenschappen centraal beheerd.
 
 ### Exceptions
+
 Bevat domeinspecifieke excepties en een centrale exception handler. Fouten worden uniform afgehandeld en vertaald naar consistente HTTP-responses.
 
 
@@ -154,17 +162,6 @@ Cylinder "1" o-- "0..*" Report : contains
 
 Report "1" --> "1" ReportSpec : uses
 
-%% ============================
-%% Notes
-%% ============================
-
-note for Cylinder "UNIQUE (Job, CylinderNr) in DB:UNIQUE (JobID, CylinderNr)"
-
-note for TapeSpec "DB: Jobs has TapeSpecID (FK)Domain: Cylinder -> TapeSpecMapping options:- inherit job-level spec to all cylinders- derive per cylinder via app rules"
-
-note for ReportSpec "DB: Jobs has ReportSpecID (FK)Domain (new): Report -> ReportSpec"
-
-note for Report "DB: Report key is (JobID, ReportNr) and FK to JobDomain: Report belongs to CylinderMapping resolved in application layer"
 ```
 
 <a id="2-1-omschrijving-domeinmodel"></a>
@@ -186,14 +183,14 @@ Op deze manier blijft het model helder, herkenbaar voor iedereen die ermee werkt
 
 ### 2.2 Entiteiten
 
-| Entiteit | Omschrijving | Relaties |
-| --- | --- | --- |
-| **Job** | Centrale entiteit met algemente informatie over een productie opdracht | 1 → 0..1 Note<br>1 → n Cylinders |
-| **Note** | Aanvullende tekst bij een job. | 0..1 → 1 Job |
-| **Cylinder** | Onderdeel binnen een job, met eigen nummering en eigenschappen (kleur en andere technische info) | n → 1 Job<br>n → 1 TapeSpec<br>1 → 0..n Reports |
-| **TapeSpec** | Technische informatie van het tape type | 1 → n Cylinders |
-| **Report** | Zijn de platen die zicht op een cylinder bevinden. | n → 1 Cylinder<br>n → 1 ReportSpec |
-| **ReportSpec** | Technische informatie van het plaattype | 1 → n Reports |
+| Entiteit       | Omschrijving                                                 | Relaties                                        |
+| -------------- | ------------------------------------------------------------ | ----------------------------------------------- |
+| **Job**        | Centrale entiteit met algemene informatie over een productie opdracht | 1 → 0..1 Note<br>1 → n Cylinders                |
+| **Note**       | Aanvullende tekst bij een job.                               | 0..1 → 1 Job                                    |
+| **Cylinder**   | Onderdeel binnen een job, met eigen nummering en eigenschappen (kleur en andere technische info) | n → 1 Job<br>n → 1 TapeSpec<br>1 → 0..n Reports |
+| **TapeSpec**   | Technische informatie van het tape type                      | 1 → n Cylinders                                 |
+| **Report**     | Zijn de platen die zich op een cylinder bevinden.            | n → 1 Cylinder<br>n → 1 ReportSpec              |
+| **ReportSpec** | Technische informatie van het plaattype                      | 1 → n Reports                                   |
 
 <a id="3-sequence-diagrams"></a>
 
@@ -208,26 +205,19 @@ sequenceDiagram
     autonumber
 
     actor Client
-    participant Security as SecurityFilterChain / Keycloak Auth
     participant JobController
     participant JobService
     participant CylinderService
-    participant PlateService
+    participant ReportService
     participant JobRepository
     participant CylinderRepository
-    participant PlateRepository
+    participant ReportRepository
     participant JobDTOMapper
 
 %% =================================================
 %% 1) Happy flow
 %% =================================================
-    Client->>Security: GET /jobs/{id} (Authorization: Bearer <token>)
-    activate Security
-
-    Security->>Security: validate JWT + roles (Keycloak)
-    Security-->>JobController: forward request (OK)
-    deactivate Security
-
+    Client->>JobController: GET /jobs/{id}
     activate JobController
     JobController->>JobService: getJobById(id)
     activate JobService
@@ -247,19 +237,19 @@ sequenceDiagram
     deactivate CylinderService
 
     loop For each cylinder in cylinders[]
-        JobService->>PlateService: getPlatesByCylinderId(cylinderId)
-        activate PlateService
-        PlateService->>PlateRepository: findAllByCylinderId(cylinderId)
-        activate PlateRepository
-        PlateRepository-->>PlateService: plates[]
-        deactivate PlateRepository
-        PlateService-->>JobService: plates[]
-        deactivate PlateService
+        JobService->>ReportService: getreportsByCylinderId(cylinderId)
+        activate ReportService
+        ReportService->>ReportRepository: findAllByCylinderId(cylinderId)
+        activate ReportRepository
+        ReportRepository-->>ReportService: reports[]
+        deactivate ReportRepository
+        ReportService-->>JobService: reports[]
+        deactivate ReportService
     end
 
-    Note right of JobService: Samenstellen hiërarchie<br/>(Job → Cylinders → Plates)<br/>in service-laag
+    Note right of JobService: Samenstellen hiërarchie<br/>(Job → Cylinders → reports)<br/>in service-laag
 
-    JobService->>JobDTOMapper: toResponseDTO(Job + cylinders + plates)
+    JobService->>JobDTOMapper: toResponseDTO(Job + cylinders + reports)
     activate JobDTOMapper
     JobDTOMapper-->>JobService: JobResponseDTO
     deactivate JobDTOMapper
@@ -267,48 +257,14 @@ sequenceDiagram
     JobService-->>JobController: JobResponseDTO
     deactivate JobService
 
-    JobController-->>Client: 200 OK (application/json)
+    JobController-->>Client: 201 OK (application/json)
     deactivate JobController
 
 %% =================================================
-%% 2) Alternative flow: Authentication failed (401)
-%% =================================================
-    alt Authentication failed (invalid/missing token)
-        Client->>Security: GET /jobs/{id} (geen of fout token)
-        activate Security
-
-        Security->>Security: validate JWT
-        Security-->>Client: 401 Unauthorized
-        deactivate Security
-
-        Note right of Client: JobController wordt niet aangeroepen
-    end
-
-%% =================================================
-%% 3) Alternative flow: Authorization failed (403)
-%% =================================================
-    alt Authorization failed (role mismatch)
-        Client->>Security: GET /jobs/{id} (token zonder juiste rol)
-        activate Security
-
-        Security->>Security: validate JWT + roles
-        Security-->>Client: 403 Forbidden
-        deactivate Security
-
-        Note right of Client: JobController wordt niet aangeroepen
-    end
-
-%% =================================================
-%% 4) Alternative flow: Job not found (404)
+%% 2) Alternative flow: Job not found (404)
 %% =================================================
     alt Job not found
-        Client->>Security: GET /jobs/{id} (geldig token)
-        activate Security
-
-        Security->>Security: validate JWT + roles
-        Security-->>JobController: forward request (OK)
-        deactivate Security
-
+        Client->>JobController: GET /jobs/{id} (geldig token)
         activate JobController
         JobController->>JobService: getJobById(id)
         activate JobService
@@ -325,151 +281,145 @@ sequenceDiagram
         deactivate JobController
     end
 
+
 ```
+
 <a id="3-2-omschrijving-get-job-operatie"></a>
 
 ### 3.2 Omschrijving Get Job operatie
 
-Het diagram beschrijft de volledige keten die wordt doorlopen wanneer een client een GET-verzoek uitvoert op /jobs/{id}. De verwerking start in de SecurityFilterChain, waar Keycloak het aangeleverde JWT-token controleert op geldigheid en de vereiste rollen. Alleen wanneer deze autorisatie slaagt, wordt de aanvraag doorgestuurd naar de JobController.  
-De controller roept vervolgens de JobService aan om de betreffende job op te halen. De service verzamelt de JobEntity, inclusief alle gerelateerde cylinders en de onderliggende plates. Nadat de volledige domeinstructuur is opgebouwd, wordt deze via de JobDTOMapper vertaald naar een JobResponseDTO. De controller levert deze DTO als respons terug aan de client met de statuscode 200 OK.
+Dit sequentiediagram beschrijft alle stappen die doorlopen worden wanneer een client een **GET-verzoek** uitvoert op het endpoint **`/jobs/{id}`**. Er mag worden aangenomen dat de authenticatie via Keycloak succesvol was, en dat de juiste rollen zijn gevalideerd. Vanaf dit punt start het diagram: de aanvraag begint direct bij de `JobController`.
 
-Het diagram bevat daarnaast drie alternatieve paden:
+Deze controller roept vervolgens de `JobService` aan om de gewenste job op te halen. De service verzamelt de complete `JobEntity`, waarbij ook alle gerelateerde *Cylinders* en de onderliggende *Reports* worden geladen. Nadat deze stap is doorlopen, wordt de volledige structuur via de `JobDTOMapper` vertaald naar een `JobResponseDTO`. Deze response wordt door de controller teruggegeven aan de client met de statuscode **200 OK**.
 
-- 401: wanneer het token ontbreekt of ongeldig is.
-- 403: wanneer de gebruiker niet over de vereiste rechten beschikt.
-- 404: wanneer de gevraagde job niet bestaat.
+Het diagram bevat daarnaast één alternatief scenario:
 
-Deze alternatieven maken de volledige verwerkingslogica, inclusief de uitzonderingssituaties, in één overzichtelijk schema inzichtelijk.
+- **404**: wanneer de gevraagde job niet bestaat.
+
+Dit alternatieve pad zorgt ervoor dat ook de uitzonderingssituatie wordt weergegeven, waardoor de volledige verwerkingslogica in één oogopslag zichtbaar is.
 
 ---
 
 <a id="3-3-delete-job"></a>
 
-### 3.3 Delete Job
+### 3.3 DELETE Report-Spec
 
 ```mermaid
 sequenceDiagram
-autonumber
+    autonumber
 
     actor Client
-    participant JobController
-    participant AuthFilter as Auth/Role Check
-    participant JobService
-    participant CylinderService
-    participant PlateService
-    participant JobRepository
-    participant CylinderRepository
-    participant PlateRepository
+    participant ReportSpecController
+    participant ReportSpecService
+    participant ReportSpecRepository
+    participant GlobalExceptionHandler
 
-%% ========================
-%% 1) Happy flow
-%% ========================
-Client->>JobController: DELETE /jobs/{id} (token)
-activate JobController
+%% =================================================
+%% 1) Happy flow (204)
+%% =================================================
+    Client->>ReportSpecController: DELETE /report-specs/{id}
+    activate ReportSpecController
+    ReportSpecController->>ReportSpecService: deleteReportSpec(id)
+    activate ReportSpecService
 
-    JobController->>AuthFilter: validateTokenAndRole(token)
-    activate AuthFilter
-    AuthFilter-->>JobController: OK
-    deactivate AuthFilter
+    Note right of ReportSpecService: Stap 1: validatie bestaan<br/>(findById)
 
-    JobController->>JobService: deleteJob(id)
-    activate JobService
+    ReportSpecService->>ReportSpecRepository: findById(id)
+    activate ReportSpecRepository
+    ReportSpecRepository-->>ReportSpecService: ReportSpecEntity
+    deactivate ReportSpecRepository
 
-    JobService->>JobRepository: findById(id)
-    activate JobRepository
-    JobRepository-->>JobService: JobEntity
-    deactivate JobRepository
+    Note right of ReportSpecService: Stap 2: check of specs in gebruik zijn
 
-    Note right of JobService: Verwijderen in één transactie
+    ReportSpecService->>ReportSpecRepository: isInUse(id)
+    activate ReportSpecRepository
+    ReportSpecRepository-->>ReportSpecService: boolean (false)
+    deactivate ReportSpecRepository
 
-    JobService->>CylinderService: getCylindersByJobId(id)
-    activate CylinderService
-    CylinderService->>CylinderRepository: findAllByJobId(id)
-    activate CylinderRepository
-    CylinderRepository-->>CylinderService: cylinders[]
-    deactivate CylinderRepository
-    CylinderService-->>JobService: cylinders[]
-    deactivate CylinderService
+    Note right of ReportSpecService: Stap 3: delete uit repository
 
-    loop For each cylinder
-        JobService->>PlateService: deletePlatesByCylinderId(cylinderId)
-        activate PlateService
+    ReportSpecService->>ReportSpecRepository: delete(entity)
+    activate ReportSpecRepository
+    ReportSpecRepository-->>ReportSpecService: void
+    deactivate ReportSpecRepository
 
-        PlateService->>PlateRepository: findAllByCylinderId(cylinderId)
-        activate PlateRepository
-        PlateRepository-->>PlateService: plates[]
-        deactivate PlateRepository
+    ReportSpecService-->>ReportSpecController: void
+    deactivate ReportSpecService
 
-        loop For each plate
-            PlateService->>PlateRepository: deleteById(plateId)
-            PlateRepository-->>PlateService: deleted
-        end
+    ReportSpecController-->>Client: 204 No Content
+    deactivate ReportSpecController
 
-        deactivate PlateService
+%% =================================================
+%% 2) Alternative flow: ReportSpec not found (404)
+%% =================================================
+    alt ReportSpec not found
+        Client->>ReportSpecController: DELETE /report-specs/{id}
+        activate ReportSpecController
+        ReportSpecController->>ReportSpecService: deleteReportSpec(id)
+        activate ReportSpecService
 
-        JobService->>CylinderService: deleteCylinder(cylinderId)
-        activate CylinderService
-        CylinderService->>CylinderRepository: deleteById(cylinderId)
-        activate CylinderRepository
-        CylinderRepository-->>CylinderService: deleted
-        deactivate CylinderRepository
-        deactivate CylinderService
+        ReportSpecService->>ReportSpecRepository: findById(id)
+        activate ReportSpecRepository
+        ReportSpecRepository-->>ReportSpecService: empty
+        deactivate ReportSpecRepository
+
+        ReportSpecService-->>ReportSpecController: throws ReportSpecNotFoundException
+        deactivate ReportSpecService
+
+        ReportSpecController->>GlobalExceptionHandler: exception bubbelt omhoog
+        activate GlobalExceptionHandler
+        GlobalExceptionHandler-->>Client: 404 Not Found (ApiErrorDTO)
+        deactivate GlobalExceptionHandler
+        deactivate ReportSpecController
     end
 
-    JobService->>JobRepository: deleteById(id)
-    activate JobRepository
-    JobRepository-->>JobService: deleted
-    deactivate JobRepository
+%% =================================================
+%% 3) Alternative flow: Entity in use (409 Conflict)
+%% =================================================
+    alt ReportSpec in gebruik
+        Client->>ReportSpecController: DELETE /report-specs/{id}
+        activate ReportSpecController
+        ReportSpecController->>ReportSpecService: deleteReportSpec(id)
+        activate ReportSpecService
 
-    JobService-->>JobController: success
-    deactivate JobService
+        ReportSpecService->>ReportSpecRepository: findById(id)
+        activate ReportSpecRepository
+        ReportSpecRepository-->>ReportSpecService: ReportSpecEntity
+        deactivate ReportSpecRepository
 
-    JobController-->>Client: 204 No Content
-    deactivate JobController
+        ReportSpecService->>ReportSpecRepository: isInUse(id)
+        activate ReportSpecRepository
+        ReportSpecRepository-->>ReportSpecService: true
+        deactivate ReportSpecRepository
 
+        ReportSpecService-->>ReportSpecController: throws EntityInUseException
+        deactivate ReportSpecService
 
-%% ========================
-%% 2) Alternative flow: Job not found
-%% ========================
-alt Job not found
-Client->>JobController: DELETE /jobs/{id} (token)
-activate JobController
-
-        JobController->>AuthFilter: validateTokenAndRole(token)
-        activate AuthFilter
-        AuthFilter-->>JobController: OK
-        deactivate AuthFilter
-
-        JobController->>JobService: deleteJob(id)
-        activate JobService
-
-        JobService->>JobRepository: findById(id)
-        activate JobRepository
-        JobRepository-->>JobService: empty
-        deactivate JobRepository
-
-        JobService-->>JobController: NotFoundException
-        deactivate JobService
-
-        JobController-->>Client: 404 Not Found
-        deactivate JobController
+        ReportSpecController->>GlobalExceptionHandler: exception bubbelt omhoog
+        activate GlobalExceptionHandler
+        GlobalExceptionHandler-->>Client: 409 Conflict (ApiErrorDTO)
+        deactivate GlobalExceptionHandler
+        deactivate ReportSpecController
     end
+
+
 ```
 
 <a id="3-4-omschrijving-job-delete-operatie"></a>
 
-### 3.4 Omschrijving Job delete operatie
+### 3.4 Omschrijving DELETE Report-Spec
 
-Het sequentiediagram toont de afhandeling van een DELETE-verzoek naar /jobs/{id}. De aanvraag passeert eerst de SecurityFilterChain, waar Keycloak het JWT-token en de vereiste rollen valideert. Na succesvolle autorisatie wordt de JobController aangeroepen, die de JobService inschakelt om de verwijderoperatie uit te voeren.  
-De service controleert of de betreffende job bestaat. Wanneer dit het geval is, worden binnen één transactie eerst alle gekoppelde cylinders opgehaald, vervolgens hun onderliggende plates verwijderd, daarna de cylinders zelf en ten slotte de job. De controller retourneert een 204 No Content als bevestiging van de succesvolle verwijdering.
+Dit sequentiediagram beschrijft alle stappen die doorlopen worden wanneer een client een **DELETE-verzoek** uitvoert naar **`/report-specs/{id}`**. Ook hier mag worden aangenomen dat de authenticatie via Keycloak succesvol was, en dat de juiste rollen zijn gevalideerd. Vanaf dit punt start het diagram: de aanvraag begint direct bij de `ReportSpecController`.
 
-Het diagram bevat daarnaast drie alternatieve paden:
+Deze controller roept vervolgens de `ReportSpecService` aan om de verwijderoperatie uit te voeren. Binnen deze service wordt eerst gecontroleerd of de opgegeven *ReportSpec* bestaat. Indien dit het geval is, wordt vastgesteld of de betreffende specificatie nog in gebruik is bij één of meerdere *Reports*. Wanneer deze controle negatief uitvalt (de specificatie is niet gekoppeld aan bestaande reports), wordt de *ReportSpec* uit de database verwijderd. De controller retourneert vervolgens een **204 No Content** als bevestiging van de succesvolle verwijdering.
 
-- 401: ongeldig of ontbrekend token.
-- 403: onvoldoende rechten.
-- 404: de opgegeven job bestaat niet.
+Het diagram bevat daarnaast drie alternatieve scenario’s:
 
-Deze alternatieven maken de volledige verwerkingslogica, inclusief de uitzonderingssituaties, in één overzichtelijk schema inzichtelijk.
+- **403**: de gebruiker beschikt niet over de vereiste rol om deze bewerking uit te voeren.
+- **404**: de opgegeven *ReportSpec* bestaat niet.
+- **409**: de *ReportSpec* kan niet worden verwijderd omdat deze nog in gebruik is.
+
+Deze alternatieven maken de volledige verwerkingsketen inzichtelijk, inclusief alle uitzonderingspaden die kunnen optreden tijdens de verwijderoperatie.
 
 <a id="4-benodigde-dependencies,-tools-en-stappen-om-de-api-te-draaien"></a>
 
@@ -656,14 +606,20 @@ Het project kan op meerdere manieren in IntelliJ IDEA worden geopend: rechtstree
 ### De WBJE API starten
 
 1. Navigeer naar:
+
    ```
    src/main/java/.../WbjeApplication.java
    ```
+
 2. Open dit bestand.
+
 3. Start de applicatie via:
+
     - **Right‑click → Run 'WbjeApplication'**, of
     - De **groene Run‑knop**.
+
 4. Nadat de applicatie is gestart, is de API bereikbaar op:
+
    ```
    http://localhost:8080
    ```
@@ -740,15 +696,15 @@ Mocht je de OAuth-instellingen handmatig willen aanmaken of controleren, volg da
 
 De collectie bevat per request een OAuth2-configuratie met de volgende parameters:
 
-| Parameter | Waarde |
-| --- | --- |
-| **Auth URL** | `http://localhost:9090/realms/WBJE/protocol/openid-connect/auth` |
-| **Token URL** | `http://localhost:9090/realms/WBJE/protocol/openid-connect/token` |
-| **Client ID** | `WBJEBackend` |
-| **Client Secret** | *(dezelfde secret als in jouw backend-project)* |
-| **Scope** | `openid` |
-| **Grant Type** | Authorization Code of Password |
-| **Browser login** | Enabled |
+| Parameter         | Waarde                                                       |
+| ----------------- | ------------------------------------------------------------ |
+| **Auth URL**      | `http://localhost:9090/realms/WBJE/protocol/openid-connect/auth` |
+| **Token URL**     | `http://localhost:9090/realms/WBJE/protocol/openid-connect/token` |
+| **Client ID**     | `WBJEBackend`                                                |
+| **Client Secret** | *(dezelfde secret als in jouw backend-project)*              |
+| **Scope**         | `openid`                                                     |
+| **Grant Type**    | Authorization Code of Password                               |
+| **Browser login** | Enabled                                                      |
 
 > Let op: in de Postman-collectie staat een *clientSecret* ingevuld.  
 > Dit betekent dat jouw Keycloak-client is ingesteld als **confidential client**.
@@ -772,19 +728,19 @@ De collectie bevat per request een OAuth2-configuratie met de volgende parameter
 De Web Based Job Editor (WBJE) maakt gebruik van Keycloak voor authenticatie en autorisatie.  
 Binnen deze applicatie bestaan twee functionele rollen:
 
-| Keycloak Rol | Beschrijving |
-| --- | --- |
+| Keycloak Rol   | Beschrijving                                                 |
+| -------------- | ------------------------------------------------------------ |
 | **ROLE_ADMIN** | Volledige beheertoegang. Mag alle entiteiten inclusief configuratie-objecten (TapeSpecs, ReportSpecs, Templates) aanmaken, wijzigen en verwijderen. |
-| **ROLE_USER** | Operator-rechten. Mag alle operationele entiteiten (Jobs, Cylinders, Reports) volledig beheren (CRUD). Mag configuratie-objecten uitsluitend lezen. |
+| **ROLE_USER**  | Operator-rechten. Mag alle operationele entiteiten (Jobs, Cylinders, Reports) volledig beheren (CRUD). Mag configuratie-objecten uitsluitend lezen. |
 
 ## 👥 Testgebruikers
 
 Voor testen met Swagger UI, Postman en de frontend kunnen de volgende Keycloak-gebruikers worden gebruikt:
 
-| Username | Password | Toegewezen rol |
-| --- | --- | --- |
-| **Operator** | `password` | **ROLE_USER** |
-| **Service** | `password` | **ROLE_ADMIN** |
+| Username     | Password   | Toegewezen rol |
+| ------------ | ---------- | -------------- |
+| **Operator** | `password` | **ROLE_USER**  |
+| **Service**  | `password` | **ROLE_ADMIN** |
 
 ---
 
@@ -796,53 +752,39 @@ Onderstaande tabel toont per endpoint en HTTP-methode welke rol toegang heeft.
 > ✔ = toegang toegestaan  
 > ✖ = geen toegang
 
-| Endpoint | Methode | ROLE_ADMIN (Service) | ROLE_USER (Operator) |
-| --- | --- | --- | --- |
-| `/tape-specs` | GET | ✔   | ✔   |
-| `/tape-specs` | POST | ✔   | ✖   |
-| `/tape-specs/{id}` | GET | ✔   | ✔   |
-| `/tape-specs/{id}` | PUT | ✔   | ✖   |
-| `/tape-specs/{id}` | DELETE | ✔   | ✖   |
-| `/report-specs` | GET | ✔   | ✔   |
-| `/report-specs` | POST | ✔   | ✖   |
-| `/report-specs/{id}` | GET | ✔   | ✔   |
-| `/report-specs/{id}` | PUT | ✔   | ✖   |
-| `/report-specs/{id}` | DELETE | ✔   | ✖   |
-| `/reports` | GET | ✔   | ✔   |
-| `/reports` | POST | ✔   | ✔   |
-| `/reports/{id}` | GET | ✔   | ✔   |
-| `/reports/{id}` | PUT | ✔   | ✔   |
-| `/reports/{id}` | DELETE | ✔   | ✔   |
-| `/jobs` | GET | ✔   | ✔   |
-| `/jobs` | POST | ✔   | ✔   |
-| `/jobs/{id}` | GET | ✔   | ✔   |
-| `/jobs/{id}` | PUT | ✔   | ✔   |
-| `/jobs/{id}` | DELETE | ✔   | ✔   |
-| `/jobs/full` | POST | ✔   | ✔   |
-| `/jobs/{jobId}/cylinders` | GET | ✔   | ✔   |
-| `/jobs/{jobId}/cylinders` | POST | ✔   | ✔   |
-| `/jobs/{jobId}/cylinders/{cylinderId}` | GET | ✔   | ✔   |
-| `/jobs/{jobId}/cylinders/{cylinderId}` | PUT | ✔   | ✔   |
-| `/jobs/{jobId}/cylinders/{cylinderId}` | DELETE | ✔   | ✔   |
-| `/job-templates` | GET | ✔   | ✔   |
-| `/job-templates` | POST | ✔   | ✖   |
-| `/job-templates/{id}` | GET | ✔   | ✔   |
-| `/job-templates/{id}` | DELETE | ✔   | ✖   |
-| `/job-templates/{id}/download` | GET | ✔   | ✔   |
-| `/public` | GET | ✔   | ✔   |
-| `/private` | GET | ✖   | ✔   |
-| `/admin` | GET | ✔   | ✖   |
-| `/roles` | GET | ✔   | ✔   |
-| `/hello` | GET | ✔   | ✔   |
-| `/debug-auth` | GET | ✔   | ✔   |
----
-
-### Tokens verversen
-
-De WBJE realm gebruikt een token lifespan van **300 seconden**. Bij 401-fouten:
-
-- opnieuw **Get New Access Token**
-- of een environment-script gebruiken dat automatisch overtijd-tokens vernieuwt
+| Endpoint                               | Methode | ROLE_ADMIN (Service) | ROLE_USER (Operator) |
+| :------------------------------------- | ------- | -------------------- | -------------------- |
+| `/tape-specs`                          | GET     | ✔                    | ✔                    |
+| `/tape-specs`                          | POST    | ✔                    | ✖                    |
+| `/tape-specs/{id}`                     | GET     | ✔                    | ✔                    |
+| `/tape-specs/{id}`                     | PUT     | ✔                    | ✖                    |
+| `/tape-specs/{id}`                     | DELETE  | ✔                    | ✖                    |
+| `/report-specs`                        | GET     | ✔                    | ✔                    |
+| `/report-specs`                        | POST    | ✔                    | ✖                    |
+| `/report-specs/{id}`                   | GET     | ✔                    | ✔                    |
+| `/report-specs/{id}`                   | PUT     | ✔                    | ✖                    |
+| `/report-specs/{id}`                   | DELETE  | ✔                    | ✖                    |
+| `/reports`                             | GET     | ✔                    | ✔                    |
+| `/reports`                             | POST    | ✔                    | ✔                    |
+| `/reports/{id}`                        | GET     | ✔                    | ✔                    |
+| `/reports/{id}`                        | PUT     | ✔                    | ✔                    |
+| `/reports/{id}`                        | DELETE  | ✔                    | ✔                    |
+| `/jobs`                                | GET     | ✔                    | ✔                    |
+| `/jobs`                                | POST    | ✔                    | ✔                    |
+| `/jobs/{id}`                           | GET     | ✔                    | ✔                    |
+| `/jobs/{id}`                           | PUT     | ✔                    | ✔                    |
+| `/jobs/{id}`                           | DELETE  | ✔                    | ✔                    |
+| `/jobs/full`                           | POST    | ✔                    | ✔                    |
+| `/jobs/{jobId}/cylinders`              | GET     | ✔                    | ✔                    |
+| `/jobs/{jobId}/cylinders`              | POST    | ✔                    | ✔                    |
+| `/jobs/{jobId}/cylinders/{cylinderId}` | GET     | ✔                    | ✔                    |
+| `/jobs/{jobId}/cylinders/{cylinderId}` | PUT     | ✔                    | ✔                    |
+| `/jobs/{jobId}/cylinders/{cylinderId}` | DELETE  | ✔                    | ✔                    |
+| `/job-templates`                       | GET     | ✔                    | ✔                    |
+| `/job-templates`                       | POST    | ✔                    | ✖                    |
+| `/job-templates/{id}`                  | GET     | ✔                    | ✔                    |
+| `/job-templates/{id}`                  | DELETE  | ✔                    | ✖                    |
+| `/job-templates/{id}/download`         | GET     | ✔                    | ✔                    |
 
 ---
 
@@ -863,22 +805,6 @@ mvn clean verify
 <a id="4-12-complete-workflow"></a>
 
 ### 4.12 Complete workflow
-
-[//]: # (1. Installeer alle tools)
-
-[//]: # (2. Start Keycloak)
-
-[//]: # (3. Maak admin-account aan &#40;alleen eerste keer&#41;)
-
-[//]: # (4. Importeer WBJE-realm)
-
-[//]: # (5. Start IntelliJ + API)
-
-[//]: # (6. Open Swagger)
-
-[//]: # (7. Gebruik Postman)
-
-[//]: # (8. Draai tests)
 
 ---
 
@@ -989,3 +915,6 @@ curl -X POST http://localhost:8080/reportspecs  -H "Authorization: Bearer <token
 ```
 curl -X POST http://localhost:8080/jobs/1/note  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"text":"Dit is een note"}'
 ```
+
+[]: 
+

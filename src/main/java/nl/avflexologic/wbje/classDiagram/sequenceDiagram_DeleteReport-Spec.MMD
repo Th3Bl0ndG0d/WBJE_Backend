@@ -1,0 +1,99 @@
+sequenceDiagram
+    autonumber
+
+    actor Client
+    participant ReportSpecController
+    participant ReportSpecService
+    participant ReportSpecRepository
+    participant ReportRepository
+
+%% =================================================
+%% 1) Happy flow (204)
+%% =================================================
+    Client->>ReportSpecController: DELETE /report-specs/{id}
+    activate ReportSpecController
+    ReportSpecController->>ReportSpecService: deleteReportSpec(id)
+    activate ReportSpecService
+
+    Note right of ReportSpecService: Stap 1: validatie bestaan<br/>(existsById)
+
+    ReportSpecService->>ReportSpecRepository: existsById(id)
+    activate ReportSpecRepository
+    ReportSpecRepository-->>ReportSpecService: boolean (true)
+    deactivate ReportSpecRepository
+
+    Note right of ReportSpecService: Stap 2: check of specs in gebruik zijn<br/>(existsByReportSpecId)
+
+    ReportSpecService->>ReportRepository: existsByReportSpecId(id)
+    activate ReportRepository
+    ReportRepository-->>ReportSpecService: boolean (false)
+    deactivate ReportRepository
+
+    Note right of ReportSpecService: Stap 3: delete uit repository
+
+    ReportSpecService->>ReportSpecRepository: deleteById(id)
+    activate ReportSpecRepository
+    ReportSpecRepository-->>ReportSpecService: void
+    deactivate ReportSpecRepository
+
+    ReportSpecService-->>ReportSpecController: void
+    deactivate ReportSpecService
+
+    ReportSpecController-->>Client: 204 No Content
+    deactivate ReportSpecController
+
+%% =================================================
+%% 2) Alternative flow: ReportSpec not found (404)
+%% =================================================
+    alt ReportSpec not found
+        Client->>ReportSpecController: DELETE /report-specs/{id}
+        activate ReportSpecController
+        ReportSpecController->>ReportSpecService: deleteReportSpec(id)
+        activate ReportSpecService
+
+        ReportSpecService->>ReportSpecRepository: existsById(id)
+        activate ReportSpecRepository
+        ReportSpecRepository-->>ReportSpecService: boolean (false)
+        deactivate ReportSpecRepository
+
+        ReportSpecService-->>ReportSpecController: throws ResourceNotFoundException
+        deactivate ReportSpecService
+
+        ReportSpecController-->>Client: 404 Not Found (via GlobalExceptionHandler)
+        deactivate ReportSpecController
+    end
+
+%% =================================================
+%% 3) Alternative flow: Entity in use (409 Conflict)
+%% =================================================
+    alt ReportSpec in gebruik
+        Client->>ReportSpecController: DELETE /report-specs/{id}
+        activate ReportSpecController
+        ReportSpecController->>ReportSpecService: deleteReportSpec(id)
+        activate ReportSpecService
+
+        ReportSpecService->>ReportSpecRepository: existsById(id)
+        activate ReportSpecRepository
+        ReportSpecRepository-->>ReportSpecService: boolean (true)
+        deactivate ReportSpecRepository
+
+        ReportSpecService->>ReportRepository: existsByReportSpecId(id)
+        activate ReportRepository
+        ReportRepository-->>ReportSpecService: boolean (true)
+        deactivate ReportRepository
+
+        ReportSpecService-->>ReportSpecController: throws EntityInUseException
+        deactivate ReportSpecService
+
+        ReportSpecController->>Client: 409 Conflict (via GlobalExceptionHandler)
+        deactivate ReportSpecController
+    end
+
+%% =================================================
+%% 4) Alternative flow: Forbidden (403)
+%% =================================================
+    alt Access denied
+        Client->>ReportSpecController: DELETE /report-specs/{id}
+        Note right of ReportSpecController: Autorizatiecontrole via Spring Security
+        ReportSpecController-->>Client: 403 Forbidden
+    end

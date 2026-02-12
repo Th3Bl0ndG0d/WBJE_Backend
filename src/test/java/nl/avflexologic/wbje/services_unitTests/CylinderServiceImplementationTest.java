@@ -1,4 +1,4 @@
-package nl.avflexologic.wbje.services;
+package nl.avflexologic.wbje.services_unitTests;
 
 import nl.avflexologic.wbje.dtos.cylinder.CylinderRequestDTO;
 import nl.avflexologic.wbje.dtos.cylinder.CylinderResponseDTO;
@@ -10,6 +10,7 @@ import nl.avflexologic.wbje.mappers.CylinderDTOMapper;
 import nl.avflexologic.wbje.repositories.CylinderRepository;
 import nl.avflexologic.wbje.repositories.JobRepository;
 import nl.avflexologic.wbje.repositories.TapeSpecRepository;
+import nl.avflexologic.wbje.services.CylinderServiceImplementation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -73,14 +74,18 @@ class CylinderServiceImplementationTest {
         CylinderEntity mappedCylinder = mock(CylinderEntity.class);
         CylinderEntity savedCylinder = mock(CylinderEntity.class);
 
+
+
         CylinderResponseDTO response = new CylinderResponseDTO(
                 100L,
                 1,
                 "Cyan",
                 "Cylinder info",
                 jobId,
-                tapeSpecId
+                tapeSpecId,
+                null
         );
+
 
         when(jobRepository.findById(jobId)).thenReturn(Optional.of(job));
         when(tapeSpecRepository.findById(tapeSpecId)).thenReturn(Optional.of(tapeSpec));
@@ -176,7 +181,8 @@ class CylinderServiceImplementationTest {
                 "Magenta",
                 "Info",
                 jobId,
-                10L
+                10L,
+                null
         );
 
         when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
@@ -247,8 +253,8 @@ class CylinderServiceImplementationTest {
 
         List<CylinderEntity> cylinders = List.of(mock(CylinderEntity.class), mock(CylinderEntity.class));
         List<CylinderResponseDTO> mapped = List.of(
-                new CylinderResponseDTO(1L, 1, "Cyan", "Info 1", jobId, 10L),
-                new CylinderResponseDTO(2L, 2, "Magenta", "Info 2", jobId, 10L)
+                new CylinderResponseDTO(1L, 1, "Cyan", "Info 1", jobId, 10L,null),
+                new CylinderResponseDTO(2L, 2, "Magenta", "Info 2", jobId, 10L,null)
         );
 
         when(jobRepository.existsById(jobId)).thenReturn(true);
@@ -346,7 +352,8 @@ class CylinderServiceImplementationTest {
                 "Black",
                 "Updated",
                 jobId,
-                tapeSpecId
+                tapeSpecId,
+                null
         );
 
         when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
@@ -404,24 +411,17 @@ class CylinderServiceImplementationTest {
 
     @Test
     void deleteCylinder_success() {
-        // Arrange
         Long jobId = 1L;
         Long cylinderId = 10L;
 
-        /*
-         * The production code removes via Job to keep the aggregate consistent.
-         * A spy allows verification of removeCylinder(cylinder) without changing domain classes.
-         */
         JobEntity job = spy(new JobEntity(LocalDateTime.now()));
         CylinderEntity cylinder = mock(CylinderEntity.class);
 
-        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId)).thenReturn(Optional.of(cylinder));
+        when(cylinderRepository.findByIdAndJob_Id(cylinderId, jobId))
+                .thenReturn(Optional.of(cylinder));
+
         when(cylinder.getJob()).thenReturn(job);
 
-        /*
-         * Ensure the cylinder is part of the job aggregate, so that removeCylinder() performs a meaningful state change.
-         * addCylinder() will call cylinder.setJob(job) which is safe for a mock.
-         */
         job.addCylinder(cylinder);
 
         // Act
@@ -429,15 +429,10 @@ class CylinderServiceImplementationTest {
 
         // Assert
         verify(cylinderRepository, times(1)).findByIdAndJob_Id(cylinderId, jobId);
-
-        /*
-         * The service must enforce aggregate consistency before deletion.
-         * This verifies that removal is performed via the aggregate root rather than solely via the repository.
-         */
         verify(job, times(1)).removeCylinder(cylinder);
-
         verify(cylinderRepository, times(1)).delete(cylinder);
         verifyNoMoreInteractions(cylinderRepository);
         verifyNoInteractions(jobRepository, tapeSpecRepository, cylinderDTOMapper);
     }
+
 }

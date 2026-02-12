@@ -108,7 +108,7 @@ public class JobEntity {
     public List<CylinderEntity> getCylinders() {
         return cylinders;
     }
-    /** Keeps the 1..* relationship consistent. */
+    /** Keeps the 0..* relationship consistent. */
     public void addCylinder(CylinderEntity cylinder) {
         if (cylinder == null) return;
         if (!this.cylinders.contains(cylinder)) {

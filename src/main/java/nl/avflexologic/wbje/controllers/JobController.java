@@ -32,20 +32,12 @@ import java.util.List;
 public class JobController {
 
     private final JobService jobService;
-    private final JobAssemblyService jobAssemblyService;
-    private final CylinderService cylinderService;
-    private final ReportService reportService;
+
 
     public JobController(
-            JobService jobService,
-            JobAssemblyService jobAssemblyService,
-            CylinderService cylinderService,
-            ReportService reportService
-    ) {
+            JobService jobService)
+    {
         this.jobService = jobService;
-        this.jobAssemblyService = jobAssemblyService;
-        this.cylinderService = cylinderService;
-        this.reportService = reportService;
     }
 
     // ---------------------------------------------------------
