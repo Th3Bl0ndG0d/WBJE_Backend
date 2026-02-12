@@ -41,6 +41,7 @@ public class OpenApiConfig {
         //String authorizationUrl = authServer + "/protocol/openid-connect/auth";
         String authorizationUrl = authServer + "/protocol/openid-connect/auth?prompt=login";
 
+
         String tokenUrl = authServer + "/protocol/openid-connect/token";
 
         // OAuth description

@@ -4,49 +4,27 @@ sequenceDiagram
     actor Client
     participant JobController
     participant JobService
-    participant CylinderService
-    participant ReportService
     participant JobRepository
-    participant CylinderRepository
-    participant ReportRepository
     participant JobDTOMapper
 
 %% =================================================
 %% 1) Happy flow
 %% =================================================
-    Client->>JobController: GET /jobs/{id} (geldig token)
+    Client->>JobController: GET /jobs/{id}
     activate JobController
+
     JobController->>JobService: getJobById(id)
     activate JobService
 
     JobService->>JobRepository: findById(id)
     activate JobRepository
-    JobRepository-->>JobService: JobEntity
+    JobRepository-->>JobService: Optional<JobEntity>
     deactivate JobRepository
 
-    JobService->>CylinderService: getCylindersByJobId(jobId)
-    activate CylinderService
-    CylinderService->>CylinderRepository: findAllByJobId(jobId)
-    activate CylinderRepository
-    CylinderRepository-->>CylinderService: cylinders[]
-    deactivate CylinderRepository
-    CylinderService-->>JobService: cylinders[]
-    deactivate CylinderService
+    Note right of JobService: JobEntity wordt opgehaald via<br/>@EntityGraph in JobRepository,<br/>waardoor cylinders en reports<br/>binnen dezelfde query worden geladen<br/>
 
-    loop For each cylinder in cylinders[]
-        JobService->>ReportService: getreportsByCylinderId(cylinderId)
-        activate ReportService
-        ReportService->>ReportRepository: findAllByCylinderId(cylinderId)
-        activate ReportRepository
-        ReportRepository-->>ReportService: reports[]
-        deactivate ReportRepository
-        ReportService-->>JobService: reports[]
-        deactivate ReportService
-    end
 
-    Note right of JobService: Samenstellen hiërarchie<br/>(Job → Cylinders → reports)<br/>in service-laag
-
-    JobService->>JobDTOMapper: toResponseDTO(Job + cylinders + reports)
+    JobService->>JobDTOMapper: toResponseDTO(JobEntity)
     activate JobDTOMapper
     JobDTOMapper-->>JobService: JobResponseDTO
     deactivate JobDTOMapper
@@ -61,17 +39,18 @@ sequenceDiagram
 %% 2) Alternative flow: Job not found (404)
 %% =================================================
     alt Job not found
-        Client->>JobController: GET /jobs/{id} (geldig token)
+        Client->>JobController: GET /jobs/{id}
         activate JobController
+
         JobController->>JobService: getJobById(id)
         activate JobService
 
         JobService->>JobRepository: findById(id)
         activate JobRepository
-        JobRepository-->>JobService: empty (no JobEntity)
+        JobRepository-->>JobService: Optional.empty()
         deactivate JobRepository
 
-        JobService-->>JobController: throws NotFoundException
+        JobService-->>JobController: throws ResourceNotFoundException
         deactivate JobService
 
         JobController-->>Client: 404 Not Found (via GlobalExceptionHandler)

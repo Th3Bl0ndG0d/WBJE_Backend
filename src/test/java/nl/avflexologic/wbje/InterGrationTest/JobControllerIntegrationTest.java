@@ -71,7 +71,7 @@ class JobControllerIntegrationTest {
                         .contentType(APPLICATION_JSON)
                         .content(requestJson))
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.content().contentType(APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.jobNumber", is("JOB-2025-001")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.jobName", is("Print job for customer X")))

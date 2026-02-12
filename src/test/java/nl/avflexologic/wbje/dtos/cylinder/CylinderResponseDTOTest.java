@@ -14,7 +14,8 @@ class CylinderResponseDTOTest {
                 "Blue",
                 "Cylinder info",
                 10L,
-                20L
+                20L,
+                null
         );
 
         assertEquals(1L, dto.id());

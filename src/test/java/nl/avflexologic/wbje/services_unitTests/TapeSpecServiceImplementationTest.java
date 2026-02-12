@@ -5,6 +5,7 @@ import nl.avflexologic.wbje.dtos.tape.TapeSpecResponseDTO;
 import nl.avflexologic.wbje.entities.TapeSpecEntity;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.TapeSpecDTOMapper;
+import nl.avflexologic.wbje.repositories.CylinderRepository;
 import nl.avflexologic.wbje.repositories.TapeSpecRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +34,8 @@ class TapeSpecServiceImplementationTest {
 
     @Mock
     private TapeSpecRepository tapeSpecRepository;
-
+    @Mock
+    private CylinderRepository cylinderRepository;
     @Mock
     private TapeSpecDTOMapper tapeSpecDTOMapper;
 

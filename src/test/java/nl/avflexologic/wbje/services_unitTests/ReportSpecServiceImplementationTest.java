@@ -5,6 +5,7 @@ import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecResponseDTO;
 import nl.avflexologic.wbje.entities.ReportSpecEntity;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.ReportSpecDTOMapper;
+import nl.avflexologic.wbje.repositories.ReportRepository;
 import nl.avflexologic.wbje.repositories.ReportSpecRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,9 @@ class ReportSpecServiceImplementationTest {
 
     @Mock
     private ReportSpecRepository reportSpecRepository;
+    @Mock
+    private ReportRepository reportRepository;
+
 
     @Mock
     private ReportSpecDTOMapper reportSpecDTOMapper;
