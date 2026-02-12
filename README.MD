@@ -5,43 +5,34 @@
 - [1. Projectomschrijving](#1-projectomschrijving)
 
 - [2. Domeinmodel](#2-domeinmodel)
-
     - [2.1 Omschrijving domeinmodel](#2-1-omschrijving-domeinmodel)
     - [2.2 Entiteiten](#2-2-entiteiten)
-- [3. Sequence diagrams](#3-sequence-diagrams)
 
+- [3. Sequence diagrams](#3-sequence-diagrams)
     - [3.1 Get Job](#3-1-get-job)
     - [3.2 Omschrijving Get Job operatie](#3-2-omschrijving-get-job-operatie)
-    - [3.3 Delete Job](#3-3-delete-job)
-    - [3.4 Omschrijving Job delete operatie](#3-4-omschrijving-job-delete-operatie)
-- [4. Benodigde dependencies, tools en stappen om de API te draaien](#4-benodigde-dependencies,-tools-en-stappen-om-de-api-te-draaien)
+    - [3.3 DELETE Report-Spec](#3-3-delete-job)
+    - [3.4 Omschrijving DELETE Report-Spec](#3-4-omschrijving-job-delete-operatie)
 
+- [4. Installatie, configuratie en testen](#4-installatie-configuratie-en-testen)
     - [4.1 Vereiste tools](#4-1-vereiste-tools)
     - [4.2 Maven dependencies](#4-2-maven-dependencies)
-    - [4.3 Keycloak installeren en starten (Windows)](#4-3-keycloak-installeren-en-starten-(windows))
-    - [4.4 Eerste keer inloggen (admin-account aanmaken)](#4-4-eerste-keer-inloggen-(admin-account-aanmaken))
-    - [4.5 Importeren van de WBJE-realm](#4-5-importeren-van-de-wbje-realm)
-    - [4.6 Samenvatting van de WBJE-realmconfiguratie](#4-6-samenvatting-van-de-wbje-realmconfiguratie)
-    - [4.7 PostgreSQL database configuratie](#4-7-postgresql-database-configuratie)
-    - [4.8 API starten via IntelliJ](#4-8-api-starten-via-intellij)
-    - [4.9 Swagger en OpenAPI](#4-9-swagger-en-openapi)
-    - [4.10 Testen met Postman](#4-10-testen-met-postman)
-    - [4.11 Tests draaien](#4-11-tests-draaien)
-    - [4.12 Complete workflow](#4-12-complete-workflow)
-    - [4.13 Testtypen en testdekking](#4-13-testtypen-en-testdekking)
-- [5. API endpoints (met voorbeelden)](#5-api-endpoints-(met-voorbeelden))
+    - [4.3 Keycloak configuratie](#4-3-keycloak-configuratie-windows) (windows)
+        - [4.3.1 Installeren en starten](#4-3-1-installeren-en-starten)
+        - [4.3.2 Admin-account aanmaken](#4-3-2-admin-account-aanmaken)
+        - [4.3.3 WBJE-realm importeren](#4-3-3-wbje-realm-importeren)
+        - [4.3.4 Realmconfiguratie overzicht](#4-3-4-realmconfiguratie-overzicht)
+    - [4.4 PostgreSQL configuratie](#4-4-postgresql-database-configuratie)
+    - [4.5 API starten via IntelliJ](#4-5-api-starten-via-intellij)
+    - [4.6 Swagger en OpenAPI](#4-6-swagger-en-openapi)
+    - [4.7 Testen met Postman](#4-7-testen-met-postman)
+    - [4.8 Testtypen en testdekking](#4-8-testtypen-en-testdekking)
+    - [4.9 Tests uitvoeren](#4-9-tests-uitvoeren)
 
-    - [5.1 Jobs](#5-1-jobs)
+- [5. API-documentatie en endpoints](#5-api-documentatie-en-endpoints)
+    - [5.1 API-documentatie](#5-1-api-documentatie)
+    - [5.2 Overzicht van beschikbare resources](#5-2-overzicht-van-beschikbare-resources)
 
-    - [5.2 Cylinders](#5-2-cylinders)
-
-    - [5.3 Reports](#5-3-reports)
-
-    - [5.4 TapeSpecs](#5-4-tapespecs)
-
-    - [5.5 ReportSpecs](#5-5-reportspecs)
-
-    - [5.6 Notes](#5-6-notes)
 
 ## 1. Projectomschrijving
 
@@ -50,13 +41,15 @@ De Web Based Job Editor (WBJE) API vormt de stateless backend voor het aanmaken,
 
 Waar de huidige Job Editor fysiek op de machine draait en daardoor productiestilstand veroorzaakt, maakt deze webgebaseerde API het mogelijk om extern en parallel jobs aan te maken zonder de montage te onderbreken. De API faciliteert alle datastromen tussen gebruikersinterface, database en machineconfiguratie.
 
-Kernfunctionaliteiten:
+## Kernfunctionaliteiten
 
-- Jobbeheer (jobs, cylinders, reports, specs)
-- Gebruikersrechtenbeheer op basis van Operator en Service rollen
-- Jobvalidatie
-- Authenticatie via Keycloak
-- Bestandsbeheer (upload/download)
+- **Jobbeheer** – aanmaken, wijzigen en verwijderen van montagejobs.
+- **Gebruikersrechtenbeheer** – Gebruikersrechtenbeheer op basis van Operator en Service rollen.
+- **Jobvalidatie** – automatische controle op volledigheid en technische correctheid voordat productie start.
+- **Authenticatie (inloggen & registreren)** – beveiligde toegang tot functionaliteiten binnen de web-API. Authenticatie via Keycloak.
+- **Bestandsbeheer** – upload en download van bijvoorbeeld jobtemplates en configuratiebestanden.
+
+
 
 
 ### Projectstructuur
@@ -93,7 +86,7 @@ Omvat beveiliging, OpenAPI, Jackson-instellingen en multipart-configuratie. Hier
 
 ### Exceptions
 
-Bevat domeinspecifieke excepties en een centrale exception handler. Fouten worden uniform afgehandeld en vertaald naar consistente HTTP-responses.
+Bevat domeinspecifieke excepties en een centrale exception handler. Fouten worden grotendeels uniform afgehandeld en vertaald naar consistente HTTP-responses.
 
 
 <a id="2-domeinmodel"></a>
@@ -154,7 +147,7 @@ classDiagram
 %% Relaties
 %% ============================
 
-Job "1" o-- "1..*" Cylinder : contains
+Job "1" o-- "0..*" Cylinder : contains
 Job "1" o-- "0..1" Note : has
 
 Cylinder "1" --> "1" TapeSpec : uses
@@ -183,14 +176,14 @@ Op deze manier blijft het model helder, herkenbaar voor iedereen die ermee werkt
 
 ### 2.2 Entiteiten
 
-| Entiteit       | Omschrijving                                                 | Relaties                                        |
-| -------------- | ------------------------------------------------------------ | ----------------------------------------------- |
-| **Job**        | Centrale entiteit met algemene informatie over een productie opdracht | 1 → 0..1 Note<br>1 → n Cylinders                |
-| **Note**       | Aanvullende tekst bij een job.                               | 0..1 → 1 Job                                    |
-| **Cylinder**   | Onderdeel binnen een job, met eigen nummering en eigenschappen (kleur en andere technische info) | n → 1 Job<br>n → 1 TapeSpec<br>1 → 0..n Reports |
-| **TapeSpec**   | Technische informatie van het tape type                      | 1 → n Cylinders                                 |
-| **Report**     | Zijn de platen die zich op een cylinder bevinden.            | n → 1 Cylinder<br>n → 1 ReportSpec              |
-| **ReportSpec** | Technische informatie van het plaattype                      | 1 → n Reports                                   |
+| Entiteit       | Omschrijving                                                 | Relaties                                           |
+| -------------- | ------------------------------------------------------------ | -------------------------------------------------- |
+| **Job**        | Centrale entiteit met algemente informatie over een productie opdracht | 1 → 0..1 Note<br>1 → 0..n Cylinders                |
+| **Note**       | Aanvullende tekst bij een job.                               | 0..1 → 1 Job                                       |
+| **Cylinder**   | Onderdeel binnen een job, met eigen nummering en eigenschappen (kleur en andere technische info) | 0..n → 1 Job<br>n → 1 TapeSpec<br>1 → 0..n Reports |
+| **TapeSpec**   | Technische informatie van het tape type                      | 1 → 0..n Cylinders                                 |
+| **Report**     | Zijn de platen die zicht op een cylinder bevinden.           | 0..n → 1 Cylinder<br>0..n → 1 ReportSpec           |
+| **ReportSpec** | Technische informatie van het plaattype                      | 1 → 0..n Reports                                   |
 
 <a id="3-sequence-diagrams"></a>
 
@@ -207,11 +200,7 @@ sequenceDiagram
     actor Client
     participant JobController
     participant JobService
-    participant CylinderService
-    participant ReportService
     participant JobRepository
-    participant CylinderRepository
-    participant ReportRepository
     participant JobDTOMapper
 
 %% =================================================
@@ -219,37 +208,19 @@ sequenceDiagram
 %% =================================================
     Client->>JobController: GET /jobs/{id}
     activate JobController
+
     JobController->>JobService: getJobById(id)
     activate JobService
 
     JobService->>JobRepository: findById(id)
     activate JobRepository
-    JobRepository-->>JobService: JobEntity
+    JobRepository-->>JobService: Optional<JobEntity>
     deactivate JobRepository
 
-    JobService->>CylinderService: getCylindersByJobId(jobId)
-    activate CylinderService
-    CylinderService->>CylinderRepository: findAllByJobId(jobId)
-    activate CylinderRepository
-    CylinderRepository-->>CylinderService: cylinders[]
-    deactivate CylinderRepository
-    CylinderService-->>JobService: cylinders[]
-    deactivate CylinderService
+    Note right of JobService: JobEntity wordt opgehaald via<br/>@EntityGraph in JobRepository,<br/>waardoor cylinders en reports<br/>binnen dezelfde query worden geladen<br/>
 
-    loop For each cylinder in cylinders[]
-        JobService->>ReportService: getreportsByCylinderId(cylinderId)
-        activate ReportService
-        ReportService->>ReportRepository: findAllByCylinderId(cylinderId)
-        activate ReportRepository
-        ReportRepository-->>ReportService: reports[]
-        deactivate ReportRepository
-        ReportService-->>JobService: reports[]
-        deactivate ReportService
-    end
-
-    Note right of JobService: Samenstellen hiërarchie<br/>(Job → Cylinders → reports)<br/>in service-laag
-
-    JobService->>JobDTOMapper: toResponseDTO(Job + cylinders + reports)
+    
+    JobService->>JobDTOMapper: toResponseDTO(JobEntity)
     activate JobDTOMapper
     JobDTOMapper-->>JobService: JobResponseDTO
     deactivate JobDTOMapper
@@ -257,30 +228,30 @@ sequenceDiagram
     JobService-->>JobController: JobResponseDTO
     deactivate JobService
 
-    JobController-->>Client: 201 OK (application/json)
+    JobController-->>Client: 200 OK (application/json)
     deactivate JobController
 
 %% =================================================
 %% 2) Alternative flow: Job not found (404)
 %% =================================================
     alt Job not found
-        Client->>JobController: GET /jobs/{id} (geldig token)
+        Client->>JobController: GET /jobs/{id}
         activate JobController
+
         JobController->>JobService: getJobById(id)
         activate JobService
 
         JobService->>JobRepository: findById(id)
         activate JobRepository
-        JobRepository-->>JobService: empty (no JobEntity)
+        JobRepository-->>JobService: Optional.empty()
         deactivate JobRepository
 
-        JobService-->>JobController: throws NotFoundException
+        JobService-->>JobController: throws ResourceNotFoundException
         deactivate JobService
 
         JobController-->>Client: 404 Not Found (via GlobalExceptionHandler)
         deactivate JobController
     end
-
 
 ```
 
@@ -312,7 +283,7 @@ sequenceDiagram
     participant ReportSpecController
     participant ReportSpecService
     participant ReportSpecRepository
-    participant GlobalExceptionHandler
+    participant ReportRepository
 
 %% =================================================
 %% 1) Happy flow (204)
@@ -322,23 +293,23 @@ sequenceDiagram
     ReportSpecController->>ReportSpecService: deleteReportSpec(id)
     activate ReportSpecService
 
-    Note right of ReportSpecService: Stap 1: validatie bestaan<br/>(findById)
+    Note right of ReportSpecService: Stap 1: validatie bestaan<br/>(existsById)
 
-    ReportSpecService->>ReportSpecRepository: findById(id)
+    ReportSpecService->>ReportSpecRepository: existsById(id)
     activate ReportSpecRepository
-    ReportSpecRepository-->>ReportSpecService: ReportSpecEntity
+    ReportSpecRepository-->>ReportSpecService: boolean (true)
     deactivate ReportSpecRepository
 
-    Note right of ReportSpecService: Stap 2: check of specs in gebruik zijn
+    Note right of ReportSpecService: Stap 2: check of specs in gebruik zijn<br/>(existsByReportSpecId)
 
-    ReportSpecService->>ReportSpecRepository: isInUse(id)
-    activate ReportSpecRepository
-    ReportSpecRepository-->>ReportSpecService: boolean (false)
-    deactivate ReportSpecRepository
+    ReportSpecService->>ReportRepository: existsByReportSpecId(id)
+    activate ReportRepository
+    ReportRepository-->>ReportSpecService: boolean (false)
+    deactivate ReportRepository
 
     Note right of ReportSpecService: Stap 3: delete uit repository
 
-    ReportSpecService->>ReportSpecRepository: delete(entity)
+    ReportSpecService->>ReportSpecRepository: deleteById(id)
     activate ReportSpecRepository
     ReportSpecRepository-->>ReportSpecService: void
     deactivate ReportSpecRepository
@@ -358,18 +329,15 @@ sequenceDiagram
         ReportSpecController->>ReportSpecService: deleteReportSpec(id)
         activate ReportSpecService
 
-        ReportSpecService->>ReportSpecRepository: findById(id)
+        ReportSpecService->>ReportSpecRepository: existsById(id)
         activate ReportSpecRepository
-        ReportSpecRepository-->>ReportSpecService: empty
+        ReportSpecRepository-->>ReportSpecService: boolean (false)
         deactivate ReportSpecRepository
 
-        ReportSpecService-->>ReportSpecController: throws ReportSpecNotFoundException
+        ReportSpecService-->>ReportSpecController: throws ResourceNotFoundException
         deactivate ReportSpecService
 
-        ReportSpecController->>GlobalExceptionHandler: exception bubbelt omhoog
-        activate GlobalExceptionHandler
-        GlobalExceptionHandler-->>Client: 404 Not Found (ApiErrorDTO)
-        deactivate GlobalExceptionHandler
+        ReportSpecController-->>Client: 404 Not Found (via GlobalExceptionHandler)
         deactivate ReportSpecController
     end
 
@@ -382,26 +350,31 @@ sequenceDiagram
         ReportSpecController->>ReportSpecService: deleteReportSpec(id)
         activate ReportSpecService
 
-        ReportSpecService->>ReportSpecRepository: findById(id)
+        ReportSpecService->>ReportSpecRepository: existsById(id)
         activate ReportSpecRepository
-        ReportSpecRepository-->>ReportSpecService: ReportSpecEntity
+        ReportSpecRepository-->>ReportSpecService: boolean (true)
         deactivate ReportSpecRepository
 
-        ReportSpecService->>ReportSpecRepository: isInUse(id)
-        activate ReportSpecRepository
-        ReportSpecRepository-->>ReportSpecService: true
-        deactivate ReportSpecRepository
+        ReportSpecService->>ReportRepository: existsByReportSpecId(id)
+        activate ReportRepository
+        ReportRepository-->>ReportSpecService: boolean (true)
+        deactivate ReportRepository
 
         ReportSpecService-->>ReportSpecController: throws EntityInUseException
         deactivate ReportSpecService
 
-        ReportSpecController->>GlobalExceptionHandler: exception bubbelt omhoog
-        activate GlobalExceptionHandler
-        GlobalExceptionHandler-->>Client: 409 Conflict (ApiErrorDTO)
-        deactivate GlobalExceptionHandler
+        ReportSpecController->>Client: 409 Conflict (via GlobalExceptionHandler)
         deactivate ReportSpecController
     end
 
+%% =================================================
+%% 4) Alternative flow: Forbidden (403)
+%% =================================================
+    alt Access denied
+        Client->>ReportSpecController: DELETE /report-specs/{id}
+        Note right of ReportSpecController: Autorizatiecontrole via Spring Security
+        ReportSpecController-->>Client: 403 Forbidden
+    end
 
 ```
 
@@ -423,9 +396,9 @@ Deze alternatieven maken de volledige verwerkingsketen inzichtelijk, inclusief a
 
 <a id="4-benodigde-dependencies,-tools-en-stappen-om-de-api-te-draaien"></a>
 
-## 4. Benodigde dependencies, tools en stappen om de API te draaien
+## 4. Installatie, configuratie en Starten van de WBJE-API
 
-Dit hoofdstuk beschrijft alle vereiste tools, afhankelijkheden, configuratiestappen en uitvoerprocedures om de WBJE-API lokaal te draaien, te testen en te benaderen. De workflow is gebaseerd op IntelliJ IDEA, Maven, Spring Boot, Keycloak, PostgreSQL en Postman.
+Dit hoofdstuk beschrijft alle vereiste tools, afhankelijkheden, configuratiestappen en procedures om de WBJE-API lokaal te draaien, te testen en te benaderen. De workflow is gebaseerd op IntelliJ IDEA, Maven, Spring Boot, Keycloak, PostgreSQL en Postman.
 
 ---
 
@@ -461,28 +434,32 @@ De volgende tools zijn noodzakelijk voor lokale ontwikkeling en uitvoering:
 
 <a id="4-3-keycloak-installeren-en-starten-(windows)"></a>
 
-### 4.3 Keycloak installeren en starten (Windows)
+### 4.3 Keycloak configuratie (Windows)
 
-#### Installatie (Windows)
+<a id="4-3-1-installeren-en-starten"></a>
+
+#### 4.3.1 Installeren en starten
+
+#### Installatie
 
 1. Download Keycloak via https://www.keycloak.org/downloads
 2. Pak het zip-bestand uit.
 3. Open een terminal in de Keycloak-map.
 
-#### Keycloak starten (Windows)
+#### Starten
 
+```
 bin\kc.bat start-dev --http-port 9090
+```
 
 - Keycloak draait op `http://localhost:9090`
 - Developer-mode is verplicht tijdens lokale ontwikkeling.
 
-#### Eerste keer inloggen (admin-account aanmaken)
+<a id="4-3-2-admin-account-aanmaken"></a>
+
+#### 4.3.2 Admin-account aanmaken
 
 Wanneer Keycloak voor de eerste keer wordt opgestart:
-
-<a id="4-4-eerste-keer-inloggen-(admin-account-aanmaken)"></a>
-
-### 4.4 Eerste keer inloggen (admin-account aanmaken)
 
 1. Navigeer naar:  
    `http://localhost:9090`
@@ -497,12 +474,11 @@ Wanneer Keycloak voor de eerste keer wordt opgestart:
 
 3. Log daarna in op de Admin Console met dit nieuwe admin-account.
 
-
 ---
 
-<a id="4-5-importeren-van-de-wbje-realm"></a>
+<a id="4-3-3-wbje-realm-importeren"></a>
 
-### 4.5 Importeren van de WBJE-realm
+#### 4.3.3 WBJE-realm importeren
 
 1. Start Keycloak.
 2. Open de **Admin Console**.
@@ -518,9 +494,9 @@ Na deze stappen is de volledige WBJE-securityconfiguratie (rollen, clients, real
 
 ---
 
-<a id="4-6-samenvatting-van-de-wbje-realmconfiguratie"></a>
+<a id="4-3-4-realmconfiguratie-overzicht"></a>
 
-### 4.6 Samenvatting van de WBJE-realmconfiguratie
+#### 4.3.4 Realmconfiguratie overzicht
 
 #### Realm
 
@@ -529,8 +505,10 @@ Na deze stappen is de volledige WBJE-securityconfiguratie (rollen, clients, real
 
 #### Rollen (client-rollen)
 
-- `ROLE_ADMIN`
-- `ROLE_USER`
+- **ROLE_ADMIN**
+    - Username: `Operator`
+- **ROLE_USER**
+    - Username: `Service`
 
 #### Backend Client
 
@@ -550,9 +528,9 @@ Na deze stappen is de volledige WBJE-securityconfiguratie (rollen, clients, real
 
 ---
 
-<a id="4-7-postgresql-database-configuratie"></a>
+<a id="4-4-postgresql-configuratie"></a>
 
-### 4.7 PostgreSQL database configuratie
+### 4.4 PostgreSQL database configuratie
 
 De PostgreSQL‑database dient vooraf ingericht te worden zodat de WBJE API correct kan verbinden en schema’s kan aanmaken.
 
@@ -574,17 +552,19 @@ GRANT ALL PRIVILEGES ON DATABASE wbje TO postgres;
 
 #### JDBC configuratie in Spring Boot
 
-De configuratie moet overeenkomen met:
+De applicatie maakt verbinding met een PostgreSQL-database via de standaard JDBC-configuratie in `application.properties`. Hierbij wordt uitgegaan van een lokaal draaiende PostgreSQL-instantie op poort `5432` en een bestaande database met de naam `wbje`. Indien PostgreSQL op een andere poort of host actief is, dient de `spring.datasource.url` overeenkomstig te worden aangepast.
+
+De configuratie ziet er momenteel zo uitt:
 
 ```
 spring.datasource.url=jdbc:postgresql://localhost:5432/wbje
-spring.datasource.username=user
+spring.datasource.username=postgres
 spring.datasource.password=password
 ```
 
-<a id="4-8-api-starten-via-intellij"></a>
+<a id="4-5-api-starten-via-intellij"></a>
 
-### 4.8 API starten via IntelliJ
+### 4.5 API starten via IntelliJ
 
 
 Het project kan op meerdere manieren in IntelliJ IDEA worden geopend: rechtstreeks vanuit de repository, via een lokale projectmap, of via een pull request. Voor alle opties geldt dezelfde vervolgstap om de API te starten.
@@ -624,14 +604,18 @@ Het project kan op meerdere manieren in IntelliJ IDEA worden geopend: rechtstree
    http://localhost:8080
    ```
 
+Bij het opstarten wordt automatisch het `data.sql`-bestand uitgevoerd. Dit script leegt eerst alle tabellen (via `TRUNCATE ... CASCADE`) en vult de database vervolgens opnieuw met voorbeelddata. De applicatie start daardoor telkens met een volledig gevulde en consistente database.
+
+Indien een schone herinitialisatie gewenst is, volstaat het om de API opnieuw te starten. De database wordt dan opnieuw gereset en gevuld.
+
 Met deze stappen kan de WBJE‑backend eenvoudig lokaal worden uitgevoerd, ongeacht hoe het project is geladen.
 
 
 ---
 
-<a id="4-9-swagger-en-openapi"></a>
+<a id="4-6-swagger-en-openapi"></a>
 
-### 4.9 Swagger en OpenAPI
+### 4.6 Swagger en OpenAPI
 
 Swagger en OpenAPI vormen de auto-gegenereerde documentatie van de WBJE-API.  
 Wanneer de Spring Boot-applicatie draait, wordt automatisch een complete en interactieve UI beschikbaar gesteld via Swagger. Hiermee kun je:
@@ -668,7 +652,7 @@ http://localhost:8080/v3/api-docs.yaml
 Deze YAML-file kan worden gebruikt voor:
 
 - genereren van client-SDK’s (TypeScript, Java, C#, Python, etc.)
-- importeren in Postman of Insomnia
+- importeren in Postman
 - API-validatie
 - documentatie-automation
 - CI/CD-validatie (contract-tests)
@@ -678,9 +662,9 @@ Springdoc genereert deze YAML live op basis van controllers, DTO’s, validatie-
 
 ---
 
-<a id="4-10-testen-met-postman"></a>
+<a id="4-7-testen-met-postman"></a>
 
-### 4.10 Testen met Postman
+### 4.7 Testen met Postman
 
 1. Start Keycloak + WBJE API + Postman
 2. Importeer `WBJE.postman_collection.json` in Postman
@@ -788,133 +772,183 @@ Onderstaande tabel toont per endpoint en HTTP-methode welke rol toegang heeft.
 
 ---
 
+<a id="4-8-testtypen-en-testdekking"></a>
 
-<a id="4-11-tests-draaien"></a>
+### 4.8 Testtypen en testdekking
 
-### 4.11 Tests draaien
-
-**Via IntelliJ:**  
-Rechtsklik op `src/test/java` → *Run All Tests*
-
-**Via Maven:**
-mvn test
-mvn clean verify
+De WBJE-backend bevat zowel **unit tests** als **integration tests**.  
+Samen zorgen deze voor verificatie van de individuele domeinlogica én de volledige applicatiestroom.
 
 ---
-
-<a id="4-12-complete-workflow"></a>
-
-### 4.12 Complete workflow
-
----
-
-<a id="4-13-testtypen-en-testdekking"></a>
-
-### 4.13 Testtypen en testdekking
 
 #### Unit Tests
 
+Unit tests richten zich primair op de servicelaag.  
+Repositories worden gemockt (Mockito), zodat uitsluitend de domeinlogica wordt getest.
 
+De volgnde itemsn worden onder andere getest:
+
+- correcte verwerking van businessregels
+- juiste exception-handling (404, 409)
+- correcte repository-interacties
+- update- en delete-operaties
+
+Unit tests draaien snel en zijn geïsoleerd van infrastructuurcomponenten.
+
+---
 
 #### Integration Tests
 
+Integration tests starten een volledige Spring Boot testcontext en testen de complete request-flow via de controllerlaag.
 
+Hierbij wordt gevalideerd dat:
 
-#### Dekking
+- controller, service en repository correct samenwerken
+- mapping naar DTO’s correct verloopt
+- HTTP-statuscodes overeenkomen met de specificatie
+- database-interactie correct plaatsvindt
 
-- **100% code coverage**
+De productie-API hoeft hiervoor niet handmatig te draaien; de testcontext wordt automatisch gestart.
 
-<a id="5-api-endpoints-(met-voorbeelden)"></a>
+---
 
-## 5. API endpoints (met voorbeelden)
+#### Line Coverage
 
-Alle voorbeelden vereisen een geldig Keycloak access token (`Authorization: Bearer <token>`).
+Line coverage geeft aan welk percentage van de broncode daadwerkelijk is uitgevoerd tijdens het draaien van de tests.
 
-<a id="5-1-jobs"></a>
+Binnen onder andere de servicelaag wordt 100% line coverage behaald.
 
-### 5.1 Jobs
+![Maven Lifecycle IntelliJ](images/xxxx.png)
 
-#### GET /jobs
+Dit betekent dat alle codepaden in deze klassen minimaal één keer zijn uitgevoerd tijdens het testen. De kern van de businesslogica is hiermee volledig afgedekt en reproduceerbaar getest.
 
-Voorbeeld:
+---
 
-```
-curl -H "Authorization: Bearer <token>" http://localhost:8080/jobs
-```
+<a id="4-9-tests-uitvoeren"></a>
 
-#### GET /jobs/{id}
+### 4.9 Tests uitvoeren
 
-```
-curl -H "Authorization: Bearer <token>" http://localhost:8080/jobs/1
-```
+Alle tests kunnen worden uitgevoerd via IntelliJ IDEA of via het ingebouwde Maven-menu.
 
-#### POST /jobs
+---
 
-```
-curl -X POST http://localhost:8080/jobs  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"number":"1234","name":"Flexo Test","repeat":1200}'
-```
+#### Via IntelliJ
 
-#### PUT /jobs/{id}
+**Alle tests uitvoeren:**
 
-```
-curl -X PUT http://localhost:8080/jobs/1  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"name":"Nieuwe naam"}'
-```
+1. Navigeer naar `src/test/java`.
+2. Rechtsklik op de testmap.
+3. Kies **Run 'All Tests'**.
 
-#### DELETE /jobs/{id}
+![Maven Lifecycle IntelliJ](images/xxxx.png)
 
-```
-curl -X DELETE http://localhost:8080/jobs/1  -H "Authorization: Bearer <token>"
-```
+**Specifieke testklasse uitvoeren:**
 
-<a id="5-2-cylinders"></a>
+1. Open de gewenste testklasse.
+2. Rechtsklik in de editor.
+3. Kies **Run 'TestClassName'**.
 
-### 5.2 Cylinders
+![Maven Lifecycle IntelliJ]()
 
-#### POST /jobs/{jobId}/cylinders
+Succesvolle tests worden groen weergegeven in de testconsole.
 
-```
-curl -X POST http://localhost:8080/jobs/1/cylinders  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"cylinderNr":1,"tapeSpecId":10}'
-```
+---
 
-<a id="5-3-reports"></a>
+#### Via Maven (IntelliJ Maven-menu)
 
-### 5.3 Reports
+1. Open het **Maven**-venster in IntelliJ.
+2. Ga naar Lifecycle:
+3. Dubbelklik op één van de volgende fases:
 
-#### POST /cylinders/{cylinderId}/reports
+- **test** → voert alle unit tests en integration tests uit.
+- **verify** → voert de volledige build- en verificatiefase uit, inclusief alle tests.
 
-```
-curl -X POST http://localhost:8080/cylinders/1/reports  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"reportSpecId":5}'
-```
+Onderstaand voorbeeld toont het Maven-venster in IntelliJ met de Lifecycle-fases zichtbaar:
 
-<a id="5-4-tapespecs"></a>
+![Maven Lifecycle IntelliJ](images/maven-lifecycle-tests.png)
 
-### 5.4 TapeSpecs
+Voor dagelijkse ontwikkeling volstaat doorgaans **test**.  Voor een volledige controle vóór oplevering wordt **verify** aanbevolen.
 
-#### POST /tapespecs
+Voor het uitvoeren van tests hoeft de productie-API niet handmatig gestart te worden.  De Spring Boot testcontext wordt automatisch geïnitialiseerd.
 
-```
-curl -X POST http://localhost:8080/tapespecs  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"thickness":1.2,"name":"SoftTape"}'
-```
+<a id="5-api-documentatie-en-endpoints"></a>
 
-<a id="5-5-reportspecs"></a>
+## 5. API-documentatie en endpoints
 
-### 5.5 ReportSpecs
+Dit hoofdstuk beschrijft waar de volledige API-documentatie geraadpleegd kan worden en geeft een overzicht van de beschikbare resources binnen de WBJE-API.
 
-#### POST /reportspecs
+Voor authenticatie- en autorisatie-instellingen wordt verwezen naar hoofdstuk [4.3](#4-3-keycloak-configuratie-windows).  Voor gebruik via Postman wordt verwezen naar hoofdstuk [4.7](#4-7-testen-met-postman).  Voor Swagger en OpenAPI wordt verwezen naar hoofdstuk [4.6](#4-6-swagger-en-openapi).
 
-```
-curl -X POST http://localhost:8080/reportspecs  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"name":"ReportA","description":"Spec A"}'
-```
+---
 
-<a id="5-6-notes"></a>
+<a id="5-1-api-documentatie"></a>
 
-### 5.6 Notes
+### 5.1 API-documentatie
 
-#### POST /jobs/{id}/note
+De volledige en actuele API-documentatie is beschikbaar in twee vormen, te noemen een HTML offline document en de interactie online Swagger UI.
+
+**1. HTML-documentatie binnen het project:**
+
+De gegenereerde HTML-documentatie bevindt zich in de root van het backend-project:
 
 ```
-curl -X POST http://localhost:8080/jobs/1/note  -H "Authorization: Bearer <token>"  -H "Content-Type: application/json"  -d '{"text":"Dit is een note"}'
+/api-documentatie.html
 ```
 
-[]: 
+Dit bestand is gegenereerd op basis van de OpenAPI-specificatie en bevat:
 
+- alle beschikbare endpoints
+- ondersteunde HTTP-methoden
+- request- en response-modellen
+- validatieregels
+- voorbeeldpayloads
+- HTTP-statuscodes
+
+De documentatie kan op twee manieren worden gebruikt:
+
+**Direct openen in de browser:**
+
+[Open API-documentatie](api-documentatie.html)
+
+**Downloaden als lokaal bestand:**
+
+<a href="api-documentatie.html" target="_blank">
+Open API-documentatie (HTML)
+</a>
+
+
+Na openen of downloaden kan het bestand lokaal in iedere browser worden geraadpleegd, onafhankelijk van een draaiende applicatie.
+
+**2. Interactieve Swagger UI (runtime):**
+
+http://localhost:8080/swagger-ui/index.html
+
+
+De interactieve documentatie wordt automatisch gegenereerd door Springdoc (zie hoofdstuk [4.6](#4-6-swagger-en-openapi)). Dit maakt het mogelijk om endpoints direct te testen.
+
+De machine-leesbare OpenAPI-specificatie is beschikbaar via:
+
+http://localhost:8080/v3/api-docs.yaml
+
+
+Deze kan gebruikt worden voor SDK-generatie, contract-testing en CI/CD-validatie.
+
+---
+
+<a id="5-2-overzicht-van-beschikbare-resources"></a>
+
+### 5.2 Overzicht van beschikbare resources
+
+Het volgende tabel toont een overzicht van de beschikbare domeinresources binnen de WBJE-API, inclusief hun functionele rol binnen het systeem.
+
+| Resource          | Omschrijving                                                 | Belangrijkste operaties            |
+| ----------------- | ------------------------------------------------------------ | ---------------------------------- |
+| **Jobs**          | Centrale productie-opdracht. Bevat algemene jobinformatie en vormt de root van het domeinmodel. | `GET`, `POST`, `PUT`, `DELETE`     |
+| **Cylinders**     | Onderdeel van een Job. Bevat technische gegevens omtrent de cylinder. | `GET`, `POST`, `PUT`, `DELETE`     |
+| **Reports**       | Plaat die op een Cylinder wordt gemonteerd.                  | `GET`, `POST`, `PUT`, `DELETE`     |
+| **TapeSpecs**     | Technische specificatie van een tape-type. Herbruikbare configuratie-entiteit. | `GET`, `POST`, `PUT`, `DELETE`     |
+| **ReportSpecs**   | Technische specificatie van een plaattype. Herbruikbare configuratie-entiteit. | `GET`, `POST`, `PUT`, `DELETE`     |
+| **Notes**         | Optionele aanvullende tekst gekoppeld aan een Job (1 → 0..1). | `GET`, `POST`, `PUT`, `DELETE`     |
+| **Job-Templates** | Templates voor herbruikbare jobconfiguraties. Ondersteunt ook downloadfunctionaliteit. | `GET`, `POST`, `DELETE`,`DOWNLOAD` |
+
+De toegangsrechten per endpoint zijn vastgelegd in de RBAC-matrix (zie hoofdstuk [4.7](#4-7-testen-met-postman)).
