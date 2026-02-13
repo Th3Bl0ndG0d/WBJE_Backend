@@ -3,12 +3,14 @@ package nl.avflexologic.wbje.exceptions;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import nl.avflexologic.wbje.dtos.error.ApiErrorDTO;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -94,6 +96,51 @@ public class GlobalExceptionHandler {
                 buildError(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI()),
                 HttpStatus.CONFLICT
         );
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorDTO> handleUnexpectedException(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        ApiErrorDTO body = buildError(
+                status,
+                "An unexpected internal error occurred.",
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(body, status);
+    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorDTO> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        ApiErrorDTO body = buildError(
+                status,
+                "Database constraint violation.",
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(body, status);
+    }
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorDTO> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ApiErrorDTO body = buildError(
+                status,
+                "Invalid parameter type for: " + ex.getName(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(body, status);
     }
 
 

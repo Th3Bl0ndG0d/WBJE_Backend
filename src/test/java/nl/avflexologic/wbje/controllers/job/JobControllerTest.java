@@ -238,8 +238,8 @@ class JobControllerTest {
      * Verifies that a job can be deleted via DELETE /jobs/{id}.
      */
     @Test
-    void deleteJob_returnsOk() throws Exception {
+    void deleteJob_returnsNoContent() throws Exception {
         mockMvc.perform(delete("/jobs/{id}", 1))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 }

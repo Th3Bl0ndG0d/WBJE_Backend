@@ -50,7 +50,12 @@ public class ReportServiceImplementation implements ReportService {
 
         ReportSpecEntity reportSpec = reportSpecRepository.findById(request.reportSpecId())
                 .orElseThrow(() -> new ResourceNotFoundException("ReportSpec not found for id: " + request.reportSpecId()));
-
+        // prevent duplicate reportNr within same cylinder
+        if (reportRepository.existsByCylinderIdAndReportNr(request.cylinderId(), request.reportNr())) {
+            throw new IllegalArgumentException(
+                    "Report number " + request.reportNr() + " already exists within this cylinder."
+            );
+        }
         ReportEntity entity = reportDTOMapper.mapToEntity(request, cylinder, reportSpec);
         ReportEntity saved = reportRepository.save(entity);
 

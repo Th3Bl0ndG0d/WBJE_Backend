@@ -41,11 +41,19 @@ public class CylinderServiceImplementation implements CylinderService {
 
     @Override
     public CylinderResponseDTO createCylinder(Long jobId, CylinderRequestDTO request) {
+
         JobEntity job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + jobId));
 
         TapeSpecEntity tapeSpec = tapeSpecRepository.findById(request.tapeSpecId())
                 .orElseThrow(() -> new ResourceNotFoundException("TapeSpec not found with id: " + request.tapeSpecId()));
+
+        //prevent duplicate cylinderNr within same job
+        if (cylinderRepository.existsByJobIdAndCylinderNr(jobId, request.cylinderNr())) {
+            throw new IllegalArgumentException(
+                    "Cylinder number " + request.cylinderNr() + " already exists within this job."
+            );
+        }
 
         CylinderEntity cylinder = cylinderDTOMapper.mapToEntity(request, job, tapeSpec);
 
@@ -58,6 +66,7 @@ public class CylinderServiceImplementation implements CylinderService {
         CylinderEntity saved = cylinderRepository.save(cylinder);
         return cylinderDTOMapper.mapToDto(saved);
     }
+
 
     @Override
     @Transactional(readOnly = true)

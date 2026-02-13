@@ -169,6 +169,122 @@ class JobControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$[1].jobNumber", is("JOB-B")));
     }
 
+    @Test
+    void deleteJob_existingIdRemovesEntity() throws Exception {
+        // Arrange
+        JobEntity job = new JobEntity(LocalDateTime.of(2025, 12, 24, 12, 0));
+        job.setJobNumber("JOB-DELETE");
+        job.setJobName("Delete me");
+        job.setCylinderWidth(800);
+        job.setCylinderCircumference(1200);
+        JobEntity saved = jobRepository.save(job);
+
+        long id = saved.getId();
+
+        // Act
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.delete("/jobs/{id}", id))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
+
+        // Assert
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.get("/jobs/{id}", id))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    void deleteJob_unknownIdGives404() throws Exception {
+        // Arrange
+        // no seeding
+
+        // Act + Assert
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.delete("/jobs/{id}", 999))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status", is(404)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error", is("Not Found")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message", is("Job not found for id: 999")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.path", is("/jobs/999")));
+    }
+
+    @Test
+    void createJob_invalidPayloadGives400() throws Exception {
+        // Arrange
+        String invalidJson = """
+            {
+              "jobNumber": "",
+              "jobDate": null,
+              "jobName": "",
+              "cylinderWidth": 0,
+              "cylinderCircumference": 0
+            }
+            """;
+
+        // Act + Assert
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.post("/jobs")
+                        .contentType(APPLICATION_JSON)
+                        .content(invalidJson))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status", is(400)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error", is("Bad Request")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.path", is("/jobs")));
+    }
+    @Test
+    void getAllJobs_whenEmptyReturnsEmptyArray() throws Exception {
+        // Arrange
+        // database is empty because of @BeforeEach
+
+        // Act + Assert
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.get("/jobs"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().contentType(APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.length()", is(0)));
+    }
+
+    @Test
+    void updateJob_existingIdUpdatesEntity() throws Exception {
+        // Arrange
+        JobEntity job = new JobEntity(LocalDateTime.of(2025, 12, 22, 10, 0));
+        job.setJobNumber("JOB-UPDATE");
+        job.setJobName("Original");
+        job.setCylinderWidth(800);
+        job.setCylinderCircumference(1200);
+        JobEntity saved = jobRepository.save(job);
+
+        long id = saved.getId();
+
+        String updateJson = """
+            {
+              "jobNumber": "JOB-UPDATE",
+              "jobDate": "2025-12-22T10:00:00",
+              "jobName": "Updated name",
+              "cylinderWidth": 900,
+              "cylinderCircumference": 1300,
+              "info": "Updated info"
+            }
+            """;
+
+        // Act
+        this.mockMvc
+                .perform(MockMvcRequestBuilders.put("/jobs/{id}", id)
+                        .contentType(APPLICATION_JSON)
+                        .content(updateJson))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.jobName", is("Updated name")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.cylinderWidth", is(900)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.cylinderCircumference", is(1300)));
+    }
+
+
+
     private long extractIdFromJson(String json) {
         Matcher matcher = ID_PATTERN.matcher(json);
         if (!matcher.find()) {

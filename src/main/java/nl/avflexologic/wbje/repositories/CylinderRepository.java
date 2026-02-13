@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface CylinderRepository extends JpaRepository<CylinderEntity, Long> {
 
     List<CylinderEntity> findAllByJob_Id(Long jobId);
-
+    boolean existsByJobIdAndCylinderNr(Long jobId, Integer cylinderNr);
     Optional<CylinderEntity> findByIdAndJob_Id(Long cylinderId, Long jobId);
     boolean existsByTapeSpecId(Long tapeSpecId);
 }

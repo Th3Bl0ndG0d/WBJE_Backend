@@ -19,4 +19,5 @@ public interface JobTemplateRepository extends JpaRepository<JobTemplateEntity, 
      * @return an Optional containing the matching entity, if present
      */
     Optional<JobTemplateEntity> findByTemplateName(String templateName);
+    boolean existsByTemplateName(String templateName);
 }

@@ -872,6 +872,10 @@ Voor dagelijkse ontwikkeling volstaat doorgaans **test**.  Voor een volledige co
 
 Voor het uitvoeren van tests hoeft de productie-API niet handmatig gestart te worden.  De Spring Boot testcontext wordt automatisch geïnitialiseerd.
 
+De onderstaande afbeelding illustreert de succesvol uitgevoerde test:
+
+![Run All CylinderServiceImplementationTest](src/main/java/nl/avflexologic/wbje/screenshots/MavenTestSuccesvol.png)
+
 <a id="5-api-documentatie-en-endpoints"></a>
 
 ## 5. API-documentatie en endpoints
