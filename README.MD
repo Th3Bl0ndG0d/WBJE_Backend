@@ -26,7 +26,7 @@
     - [4.5 API starten via IntelliJ](#4-5-api-starten-via-intellij)
     - [4.6 Swagger en OpenAPI](#4-6-swagger-en-openapi)
     - [4.7 Testen met Postman](#4-7-testen-met-postman)
-    - [4.8 Testtypen en testdekking](#4-8-testtypen-en-testdekking)
+    - [4.8 Testen in IntelliJ IDEA 2025.2.1](#4-8-Testen-in-IntelliJ-IDEA-2025.2.1)
     - [4.9 Tests uitvoeren](#4-9-tests-uitvoeren)
 
 - [5. API-documentatie en endpoints](#5-api-documentatie-en-endpoints)
@@ -665,15 +665,153 @@ Springdoc genereert deze YAML live op basis van controllers, DTO’s, validatie-
 
 <a id="4-7-testen-met-postman"></a>
 
-### 4.7 Testen met Postman
+## 4.7 Testen met Postman – Geautomatiseerde gecombineerde tests
 
-1. Start Keycloak + WBJE API + Postman
-2. Importeer `WBJE.postman_collection.json` in Postman
-3. Selecteer of maak een Postman environment
-4. Verzend requests zodra token-configuratie actief is
+De meegeleverde Postman-collectie bevat een volledig geautomatiseerde testworkflow waarin:
 
-De meegeleverde Postman-collectie bevat al een volledig geconfigureerde OAuth2-instelling. Hierdoor kun je direct een access token ophalen en aanvragen uitvoeren.  
-Mocht je de OAuth-instellingen handmatig willen aanmaken of controleren, volg dan onderstaande uitleg.
+- OAuth2 login (Operator + Service)
+- RBAC-validatie
+- Volledige CRUD-flow (TapeSpec → ReportSpec → Job → Cylinder → Report)
+- Negatieve scenario’s (403 / 404 / 409 / 422)
+- Cleanup van alle aangemaakte resources
+
+gecombineerd worden in één consistente integratietest.
+
+De collectie heet:
+
+> **WBJE – Full Combined tests Service vs Operator**
+
+------
+
+### Voorbereiding
+
+1. Start **Keycloak**
+2. Start de **WBJE API**
+3. Open **Postman**
+4. Importeer de collectie `WBJE.postman_collection.json`
+5. Controleer of de environment-variabele `baseUrl` correct staat
+   *(standaard: `http://localhost:8080`)*
+
+------
+
+### Teststructuur binnen de collectie
+
+De collectie bevat twee hoofdscenario’s. Test 1 en Test 2
+
+![TwoAutomatedPostmanTests.png](src/main/java/nl/avflexologic/wbje/screenshots/TwoAutomatedPostmanTests.png)
+
+------
+
+### Test 1
+
+***(Direct na API-start uitvoeren)***
+
+Dit scenario gebruikt data uit `data.sql`. Het moet direct na applicatie-start worden uitgevoerd, zonder dat tussentijds data is aangepast.
+
+**Dit blok bevat:**
+
+- Operator login
+- RBAC-validatie (ROLE_USER)
+- Service login
+- Admin CRUD-operaties
+- Job-template upload
+- Cleanup
+
+> ⚠️ Wanneer er tussentijds data is gewijzigd, kan dit scenario falen.
+
+------
+
+### Test 2
+
+***(Volledig zelfstandig integratiescenario)***
+
+Dit is een complete end-to-end workflow en kan op ieder moment worden uitgevoerd zolang de API draait.
+
+**Dit scenario voert automatisch uit:**
+
+1. Operator login
+2. Service login
+3. TapeSpec create → update → delete
+4. ReportSpec create → update → delete
+5. Job create → update → delete
+6. Cylinder create → update → duplicate test
+7. Report create → update → invalid reference test
+8. Conflict tests (409 bij in-use resources)
+9. Cleanup van alle aangemaakte entiteiten
+10. Negatieve tests op reeds verwijderde resources
+
+Alle ID’s worden automatisch opgeslagen in collection variables.
+
+------
+
+## Geautomatiseerde tests uitvoeren
+
+### Stap 1 – Selecteer de collectie
+
+Klik links op:
+
+> **WBJE – Full Combined tests Service vs Operator**
+
+------
+
+### Stap 2 – Start de Runner
+
+Klik op de drie puntjes naast de collectie en kies:
+
+> **Run**
+
+![RunPostmanCollection.png](src/main/java/nl/avflexologic/wbje/screenshots/RunPostmanCollection.png)
+
+*(of gebruik de knop rechtsboven in het overzicht)*
+
+
+
+------
+
+### Stap 3 – Start de run
+
+Klik op:
+
+> **Run WBJE – Full Combined tests**
+>
+![SelectAllTestsAndPressRUNWBJE.png](src/main/java/nl/avflexologic/wbje/screenshots/SelectAllTestsAndPressRUNWBJE.png)
+
+------
+
+### Verwachte uitkomst
+
+Bij een correct functionerende API:
+
+- Alle tests: **56**
+- Errors: **0**
+
+![SuccesFullTest.png](src/main/java/nl/avflexologic/wbje/screenshots/SuccesFullTest.png)
+
+------
+
+### Belangrijk bij Job Templates
+
+Voor de test:
+
+```
+[SV] POST /job-templates – allowed (ROLE_ADMIN)
+```
+
+moet in Postman een **echt bestand** gekoppeld zijn aan het `file`-veld. Zonder bestand zal deze test falen.
+
+------
+
+### Resultaatinterpretatie
+
+| Status    | Betekenis                        |
+| --------- | -------------------------------- |
+| 200 / 201 | Succesvolle create/update        |
+| 204       | Succesvolle delete               |
+| 403       | Correcte RBAC-afwijzing          |
+| 404       | Resource bestaat niet            |
+| 409       | Resource in use                  |
+| 422       | Validatiefout                    |
+| 500       | Onverwachte fout (implementatie) |
 
 ---
 
@@ -773,9 +911,9 @@ Onderstaande tabel toont per endpoint en HTTP-methode welke rol toegang heeft.
 
 ---
 
-<a id="4-8-testtypen-en-testdekking"></a>
+<a id="4-8-Testen-in-IntelliJ-IDEA-2025.2.1"></a>
 
-### 4.8 Testtypen en testdekking
+### 4.8 Testen in IntelliJ IDEA 2025.2.1
 
 De WBJE-backend bevat zowel **unit tests** als **integration tests**.  
 Samen zorgen deze voor verificatie van de individuele domeinlogica én de volledige applicatiestroom.
@@ -817,7 +955,7 @@ De productie-API hoeft hiervoor niet handmatig te draaien; de testcontext wordt 
 
 Line coverage geeft aan welk percentage van de broncode daadwerkelijk is uitgevoerd tijdens het draaien van de tests.
 
-Binnen onder andere de servicelaag wordt 100% line coverage behaald.
+Binnen de servicelaag wordt 100% line coverage behaald op JobServiceImplementation en ReportSpecImplementation.
 
 ![100% Line Coverage](src/main/java/nl/avflexologic/wbje/screenshots/lineCoverage.png)
 
@@ -874,7 +1012,7 @@ Voor het uitvoeren van tests hoeft de productie-API niet handmatig gestart te wo
 
 De onderstaande afbeelding illustreert de succesvol uitgevoerde test:
 
-![Run All CylinderServiceImplementationTest](src/main/java/nl/avflexologic/wbje/screenshots/MavenTestSuccesvol.png)
+![MavenTestSuccesvol](src/main/java/nl/avflexologic/wbje/screenshots/MavenTestSuccesvol.png)
 
 <a id="5-api-documentatie-en-endpoints"></a>
 
@@ -909,20 +1047,13 @@ Dit bestand is gegenereerd op basis van de OpenAPI-specificatie en bevat:
 - voorbeeldpayloads
 - HTTP-statuscodes
 
-De documentatie kan op twee manieren worden gebruikt:
+De documentatie kan als volgt opgehaald worden.
 
 **Direct openen in de browser:**
 
-[Open API-documentatie](api-documentatie.html)
+[Open API-documentatie](api-documentatie.html)\*
 
-**Downloaden als lokaal bestand:**
-
-<a href="api-documentatie.html" target="_blank">
-Open API-documentatie (HTML)
-</a>
-
-
-Na openen of downloaden kan het bestand lokaal in iedere browser worden geraadpleegd, onafhankelijk van een draaiende applicatie.
+\* Open lokaal in een browser buiten IntelliJ/GitHub; hiermee is de documentatie offline interactief zichtbaar.
 
 **2. Interactieve Swagger UI (runtime):**
 
