@@ -3,14 +3,19 @@ package nl.avflexologic.wbje.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "tape_specs")
+@Table(
+        name = "tape_specs",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_tape_specs_tape_name", columnNames = "tape_name")
+        }
+)
 public class TapeSpecEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tape_name", length = 255)
+    @Column(name = "tape_name", length = 255, nullable = false)
     private String tapeName;
 
     @Column(name = "tape_type", length = 255)
@@ -74,5 +79,4 @@ public class TapeSpecEntity {
     public int hashCode() {
         return getClass().hashCode();
     }
-
 }

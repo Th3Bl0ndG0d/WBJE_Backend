@@ -1,5 +1,6 @@
 package nl.avflexologic.wbje.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -94,39 +95,16 @@ public class SecurityConfigOauth {
                         // Alles wat overblijft: minimaal ingelogd
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication required.")
+                        )
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied.")
+                        )
+                )
+
                 .build();
-//                .
-//                authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(
-//                                "/swagger-ui.html",
-//                                "/swagger-ui/**",
-//                                "/v3/api-docs",
-//                                "/v3/api-docs/**",
-//                                "/v3/api-docs.yaml",
-//                                "/swagger-resources/**",
-//                                "/webjars/**"
-//                        ).permitAll()
-//                                // Debug-endpoints alleen voor ADMIN (Service)
-//                                .requestMatchers("/debug-auth", "/roles").hasRole("ADMIN")
-//
-//                                // Admin-only API's (Service)
-//                                .requestMatchers("/admin/**").hasRole("ADMIN")
-//
-//                                // Jobbeheer – zowel Operator (USER) als Service (ADMIN)
-//                                .requestMatchers(
-//                                        "/jobs/**",
-//                                        "/cylinders/**",
-//                                        "/reports/**",
-//                                        "/tapes/**"
-//                                ).hasAnyRole("USER", "ADMIN")
-//
-//                                // Job-templates – ook voor Operator en Service
-//                                .requestMatchers("/job-templates/**").hasRole("ADMIN")
-//
-//                                // Alles wat overblijft: minimaal ingelogd
-//                                .anyRequest().authenticated()
-//                )
-//                .build();
     }
 
     public JwtDecoder jwtDecoder(){

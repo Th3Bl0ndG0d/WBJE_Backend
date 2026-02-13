@@ -17,6 +17,7 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
     List<ReportEntity> findAllByCylinderId(Long cylinderId);
     boolean existsByReportSpecId(Long reportSpecId);
     boolean existsByCylinderId(Long cylinderId);
+    boolean existsByCylinderIdAndReportNr(Long cylinderId, Integer reportNr);
 
     /**
      * Returns a single report by its cylinder scope and report number.

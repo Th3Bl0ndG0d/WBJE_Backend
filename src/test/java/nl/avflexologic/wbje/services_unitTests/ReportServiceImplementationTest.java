@@ -1,4 +1,4 @@
-package nl.avflexologic.wbje.services;
+package nl.avflexologic.wbje.services_unitTests;
 
 import nl.avflexologic.wbje.dtos.report.ReportRequestDTO;
 import nl.avflexologic.wbje.dtos.report.ReportResponseDTO;
@@ -10,6 +10,7 @@ import nl.avflexologic.wbje.mappers.ReportDTOMapper;
 import nl.avflexologic.wbje.repositories.CylinderRepository;
 import nl.avflexologic.wbje.repositories.ReportRepository;
 import nl.avflexologic.wbje.repositories.ReportSpecRepository;
+import nl.avflexologic.wbje.services.ReportServiceImplementation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -82,6 +83,11 @@ class ReportServiceImplementationTest {
 
         when(cylinderRepository.findById(cylinderId)).thenReturn(Optional.of(cylinder));
         when(reportSpecRepository.findById(reportSpecId)).thenReturn(Optional.of(reportSpec));
+
+        // 🔹 Toegevoegd: duplicate check stub (indien aanwezig in service)
+        when(reportRepository.existsByCylinderIdAndReportNr(cylinderId, 1))
+                .thenReturn(false);
+
         when(reportDTOMapper.mapToEntity(request, cylinder, reportSpec)).thenReturn(mapped);
         when(reportRepository.save(mapped)).thenReturn(saved);
         when(reportDTOMapper.mapToDto(saved)).thenReturn(response);
@@ -97,15 +103,22 @@ class ReportServiceImplementationTest {
         assertEquals(10, result.xOffset(), "xOffset must reflect the request.");
         assertEquals(20, result.yOffset(), "yOffset must reflect the request.");
         assertEquals(cylinderId, result.cylinderId(), "cylinderId must reflect the request context.");
-        assertEquals(reportSpecId, result.reportSpecId(), "reportSpecId must reflect the request.");
+        assertEquals(reportSpecId, result.reportSpecId(), "reportSpecId must reflect the request context.");
 
         verify(cylinderRepository, times(1)).findById(cylinderId);
         verify(reportSpecRepository, times(1)).findById(reportSpecId);
+
+        // Toegevoegd: duplicate check verify
+        verify(reportRepository, times(1))
+                .existsByCylinderIdAndReportNr(cylinderId, 1);
+
         verify(reportDTOMapper, times(1)).mapToEntity(request, cylinder, reportSpec);
         verify(reportRepository, times(1)).save(mapped);
         verify(reportDTOMapper, times(1)).mapToDto(saved);
+
         verifyNoMoreInteractions(cylinderRepository, reportSpecRepository, reportRepository, reportDTOMapper);
     }
+
 
     @Test
     void createReport_cylinderMissing() {

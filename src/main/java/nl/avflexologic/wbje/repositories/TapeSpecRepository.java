@@ -10,5 +10,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface TapeSpecRepository extends JpaRepository<TapeSpecEntity, Long> {
-
+    boolean existsByTapeName(String name);
+    boolean existsByTapeNameAndIdNot(String name, Long id);
 }

@@ -43,6 +43,13 @@ public class JobTemplateServiceImplementation implements JobTemplateService {
 
     @Override
     public JobTemplateResponseDTO storeTemplate(MultipartFile file, String templateName) {
+
+        // prevent duplicate templateName
+        if (repository.existsByTemplateName(templateName)) {
+            throw new IllegalArgumentException(
+                    "JobTemplate with name '" + templateName + "' already exists."
+            );
+        }
         String storedFileName = generateStoredFileName(file.getOriginalFilename());
 
         JobTemplateEntity entity = new JobTemplateEntity(

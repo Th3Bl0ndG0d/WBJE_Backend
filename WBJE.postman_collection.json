@@ -1,0 +1,2326 @@
+{
+  "info": {
+    "_postman_id": "f47bc4ec-cb3e-42be-a9a8-2b6569adf441",
+    "name": "WBJE - Full Combined tests Service vs Operator",
+    "description": "**Complete testworkflow** with Service/Operator login (password grant), correct scope, CRUD + negative RBAC/404/409/422 + cleanup.  \n  \n**Test 1** needs to be run directly after startup of the API, if you have changed something inbetween. this test wont work anymore. It is using data.sql from the recourses.  \n  \n**Test2** can be run even after changing using the API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "30627586"
+  },
+  "item": [
+    {
+      "name": "Test 1 (These test need to be started directly after the API statup)",
+      "item": [
+        {
+          "name": "Operator Login Copy",
+          "item": [
+            {
+              "name": "Auth – Login as Operator (ROLE_USER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator login succeeded\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var json = pm.response.json();",
+                      "    pm.expect(json).to.have.property('access_token');",
+                      "});",
+                      "",
+                      "var json = pm.response.json();",
+                      "pm.collectionVariables.set('operator_token', json.access_token);",
+                      "console.log('Operator token set');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "grant_type",
+                      "value": "password",
+                      "type": "text"
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "{{client_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "client_secret",
+                      "value": "{{client_secret}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "username",
+                      "value": "Operator",
+                      "type": "text"
+                    },
+                    {
+                      "key": "password",
+                      "value": "password",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{keycloak_token_url}}",
+                  "host": [
+                    "{{keycloak_token_url}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "RBAC – Operator (ROLE_USER) Copy",
+          "item": [
+            {
+              "name": "[OP] GET /tape-specs – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: GET /tape-specs => 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tape-specs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tape-specs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[OP] POST /tape-specs – forbidden (ROLE_USER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: POST /tape-specs => 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tapeName\": \"OP-Forbidden Tape\",\n  \"tapeType\": \"TEST\",\n  \"thickness\": 80,\n  \"info\": \"Created by Operator, should be 403\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tape-specs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tape-specs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[OP] GET /report-specs – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: GET /report-specs => 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/report-specs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "report-specs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[OP] DELETE /report-specs/1 – forbidden (ROLE_USER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: DELETE /report-specs/1 => 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/report-specs/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "report-specs",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[OP] POST /jobs – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: POST /jobs => 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json && json.id) {",
+                      "    pm.collectionVariables.set('operator_job_id', json.id);",
+                      "    console.log('Stored operator_job_id = ' + json.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"jobNumber\": \"OP-TEST-001\",\n  \"jobName\": \"Operator Test Job\",\n  \"jobDate\": \"2026-02-11T10:00:00\",\n  \"info\": \"Created by Operator from RBAC test\",\n  \"cylinderWidth\": 1200,\n  \"cylinderCircumference\": 1000\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/jobs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "jobs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[OP] GET /jobs/{id} – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: GET /jobs/{id} => 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/jobs/{{operator_job_id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "jobs",
+                    "{{operator_job_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[OP] POST /job-templates – forbidden (ROLE_USER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Operator: POST /job-templates => 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{operator_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "templateName",
+                      "value": "operator-template-should-fail",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "value": null
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/job-templates",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "job-templates"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Service Login Copy",
+          "item": [
+            {
+              "name": "Auth – Login as Service (ROLE_ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service login succeeded\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "    var json = pm.response.json();",
+                      "    pm.expect(json).to.have.property('access_token');",
+                      "});",
+                      "",
+                      "var json = pm.response.json();",
+                      "pm.collectionVariables.set('service_token', json.access_token);",
+                      "console.log('Service token set');"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-www-form-urlencoded"
+                  }
+                ],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "grant_type",
+                      "value": "password",
+                      "type": "text"
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "{{client_id}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "client_secret",
+                      "value": "{{client_secret}}",
+                      "type": "text"
+                    },
+                    {
+                      "key": "username",
+                      "value": "Service",
+                      "type": "text"
+                    },
+                    {
+                      "key": "password",
+                      "value": "password",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{keycloak_token_url}}",
+                  "host": [
+                    "{{keycloak_token_url}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "RBAC – Service (ROLE_ADMIN) Copy",
+          "item": [
+            {
+              "name": "[SV] GET /tape-specs – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: GET /tape-specs => 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tape-specs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tape-specs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] POST /tape-specs – allowed (create admin tape)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: POST /tape-specs => 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json && json.id) {",
+                      "    pm.collectionVariables.set('admin_tape_spec_id', json.id);",
+                      "    console.log('Stored admin_tape_spec_id = ' + json.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tapeName\": \"ADMIN-TEST-TAPE\",\n  \"tapeType\": \"ADMIN\",\n  \"thickness\": 90,\n  \"info\": \"Created by Service RBAC test\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tape-specs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tape-specs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] PUT /tape-specs/{id} – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: PUT /tape-specs/{id} => 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tapeName\": \"ADMIN-TEST-TAPE-UPDATED\",\n  \"tapeType\": \"ADMIN\",\n  \"thickness\": 95,\n  \"info\": \"Updated by Service RBAC test\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/tape-specs/{{admin_tape_spec_id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tape-specs",
+                    "{{admin_tape_spec_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] DELETE /tape-specs/{id} – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: DELETE /tape-specs/{id} => 204/200\", function () {",
+                      "    pm.expect([200, 204]).to.include(pm.response.code);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tape-specs/{{admin_tape_spec_id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tape-specs",
+                    "{{admin_tape_spec_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] POST /report-specs – allowed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: POST /report-specs => 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json && json.id) {",
+                      "    pm.collectionVariables.set('admin_report_spec_id', json.id);",
+                      "    console.log('Stored admin_report_spec_id = ' + json.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reportName\": \"ADMIN-REPORT-SPEC\",\n  \"reportType\": \"TEST\",\n  \"thickness\": 120,\n  \"info\": \"Created by Service RBAC test\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/report-specs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "report-specs"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] DELETE /report-specs/{id} – allowed (in use or not)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Businesslogica kan 204 of 409 geven, maar het mag in ieder geval geen 403 zijn.",
+                      "pm.test(\"Service: DELETE /report-specs/{id} is niet verboden\", function () {",
+                      "    pm.expect(pm.response.code).to.not.equal(403);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/report-specs/{{admin_report_spec_id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "report-specs",
+                    "{{admin_report_spec_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] DELETE /jobs/{id} – allowed (ROLE_ADMIN, maar ook ROLE_USER)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: DELETE /jobs/{id} => 204/200\", function () {",
+                      "    pm.expect([200, 204]).to.include(pm.response.code);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/jobs/{{operator_job_id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "jobs",
+                    "{{operator_job_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] POST /job-templates – allowed (ROLE_ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// Let op: om deze test te laten slagen moet je in Postman een echt bestand koppelen aan het 'file' veld.",
+                      "pm.test(\"Service: POST /job-templates => 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "var json = pm.response.json();",
+                      "if (json && json.id) {",
+                      "    pm.collectionVariables.set('admin_template_id', json.id);",
+                      "    console.log('Stored admin_template_id = ' + json.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "uuid": "34c79995-64e8-4b6f-a884-a6b4ad1b32e9",
+                      "src": [
+                        "postman-cloud:///1f0f613e-cbce-47e0-9c5b-059ecefc8107",
+                        "/C:/Users/Admin/Documents/gitignore_global.txt"
+                      ]
+                    },
+                    {
+                      "key": "name",
+                      "value": "testfile",
+                      "type": "text",
+                      "uuid": "7370096f-ecd0-4beb-bbd1-926d25b154a0"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/job-templates",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "job-templates"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "[SV] DELETE /job-templates/{id} – allowed (ROLE_ADMIN)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Service: DELETE /job-templates/{id} => 204/200\", function () {",
+                      "    pm.expect([200, 204]).to.include(pm.response.code);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{service_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/job-templates/{{admin_template_id}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "job-templates",
+                    "{{admin_template_id}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Test 2 (These test can be run at different moments, but the API needs to run)",
+      "item": [
+        {
+          "name": "00 - AUTH (Operator) - Login and store operator_token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Operator login succeeded (200)', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Operator token present', function () { pm.expect(json).to.have.property('access_token'); });",
+                  "pm.collectionVariables.set('operator_token', json.access_token);",
+                  "console.log('Operator token set');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid"
+                },
+                {
+                  "key": "username",
+                  "value": "{{operator_username}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{operator_password}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_token_url}}",
+              "host": [
+                "{{keycloak_token_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "01 - AUTH (Service) - Login and store service_token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Service login succeeded (200)', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Service token present', function () { pm.expect(json).to.have.property('access_token'); });",
+                  "pm.collectionVariables.set('service_token', json.access_token);",
+                  "console.log('Service token set');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid"
+                },
+                {
+                  "key": "username",
+                  "value": "{{service_username}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{service_password}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloak_token_url}}",
+              "host": [
+                "{{keycloak_token_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - RBAC (Operator) - POST /tape-specs should be 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 expected', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tapeName\": \"Illegal\",\n  \"tapeType\": \"Flexo\",\n  \"thickness\": 1,\n  \"info\": \"Should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Service - POST /tape-specs (create)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json).to.have.property('id');",
+                  "pm.collectionVariables.set('tapeSpecId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tapeName\": \"TestTape-A\",\n  \"tapeType\": \"Flexo\",\n  \"thickness\": 80,\n  \"info\": \"Manual test tape\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - Operator - GET /tape-specs (list) should be 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - Operator - GET /tape-specs/{{tapeSpecId}} (by id) should be 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs/{{tapeSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs",
+                "{{tapeSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - Service - PUT /tape-specs/{{tapeSpecId}} (update)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tapeName\": \"TestTape-A-Updated\",\n  \"tapeType\": \"Flexo\",\n  \"thickness\": 85,\n  \"info\": \"Updated info\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs/{{tapeSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs",
+                "{{tapeSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 - Service - POST /report-specs (create)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json).to.have.property('id');",
+                  "pm.collectionVariables.set('reportSpecId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportName\": \"PlateSpec-A\",\n  \"reportType\": \"Polymer\",\n  \"thickness\": 67,\n  \"info\": \"Manual test spec\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/report-specs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 - Operator - GET /report-specs (list) should be 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/report-specs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 - Operator - GET /report-specs/{{reportSpecId}} (by id) should be 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/report-specs/{{reportSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs",
+                "{{reportSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 - Service - PUT /report-specs/{{reportSpecId}} (update)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportName\": \"PlateSpec-A-Updated\",\n  \"reportType\": \"Polymer\",\n  \"thickness\": 70,\n  \"info\": \"Updated spec\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/report-specs/{{reportSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs",
+                "{{reportSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11 - RBAC (Operator) - DELETE /report-specs/{{reportSpecId}} should be 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 expected', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/report-specs/{{reportSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs",
+                "{{reportSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12 - Operator - POST /jobs (create)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json).to.have.property('id');",
+                  "pm.collectionVariables.set('jobId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobNumber\": \"JOB-TEST-001\",\n  \"jobDate\": \"2026-02-13T10:00:00\",\n  \"jobName\": \"Manual Integration Test\",\n  \"cylinderWidth\": 1000,\n  \"cylinderCircumference\": 1200,\n  \"info\": \"Test job\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13 - Operator - GET /jobs/{{jobId}} (by id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "14 - Operator - GET /jobs (list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15 - Operator - PUT /jobs/{{jobId}} (update)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobNumber\": \"JOB-TEST-001-UPD\",\n  \"jobDate\": \"2026-02-13T12:00:00\",\n  \"jobName\": \"Manual Integration Test Updated\",\n  \"cylinderWidth\": 1100,\n  \"cylinderCircumference\": 1300,\n  \"info\": \"Updated job\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "16 - Operator - POST /jobs/{{jobId}}/cylinders (create)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json).to.have.property('id');",
+                  "pm.collectionVariables.set('cylinderId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cylinderNr\": 1,\n  \"color\": \"Cyan\",\n  \"cylinderInfo\": \"Test cylinder\",\n  \"tapeSpecId\": {{tapeSpecId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/cylinders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "cylinders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "17 - Operator - GET /jobs/{{jobId}}/cylinders (list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/cylinders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "cylinders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "18 - Operator - GET /jobs/{{jobId}}/cylinders/{{cylinderId}} (by id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/cylinders/{{cylinderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "cylinders",
+                "{{cylinderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "19 - Operator - PUT /jobs/{{jobId}}/cylinders/{{cylinderId}} (update)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cylinderNr\": 1,\n  \"color\": \"Magenta\",\n  \"cylinderInfo\": \"Updated cylinder\",\n  \"tapeSpecId\": {{tapeSpecId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/cylinders/{{cylinderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "cylinders",
+                "{{cylinderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "20 - Negative - Duplicate cylinderNr in same job (expect 400/422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate rejected', function () { pm.expect([400,422]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cylinderNr\": 1,\n  \"color\": \"Yellow\",\n  \"cylinderInfo\": \"Duplicate nr\",\n  \"tapeSpecId\": {{tapeSpecId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/cylinders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "cylinders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "21 - Operator - POST /reports (create)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json).to.have.property('id');",
+                  "pm.collectionVariables.set('reportId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportNr\": 1,\n  \"reportWidth\": 400,\n  \"xOffset\": 10,\n  \"yOffset\": 20,\n  \"cylinderId\": {{cylinderId}},\n  \"reportSpecId\": {{reportSpecId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "22 - Operator - GET /reports/{{reportId}} (by id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "23 - Operator - GET /reports?cylinderId={{cylinderId}} (list by cylinder)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports?cylinderId={{cylinderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "cylinderId",
+                  "value": "{{cylinderId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "24 - Operator - PUT /reports/{{reportId}} (update)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportNr\": 1,\n  \"reportWidth\": 420,\n  \"xOffset\": 15,\n  \"yOffset\": 25,\n  \"cylinderId\": {{cylinderId}},\n  \"reportSpecId\": {{reportSpecId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "25 - Negative - Create Report with invalid reportSpecId (expect 404/422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid spec rejected', function () { pm.expect([404,422]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportNr\": 2,\n  \"reportWidth\": 380,\n  \"xOffset\": 0,\n  \"yOffset\": 0,\n  \"cylinderId\": {{cylinderId}},\n  \"reportSpecId\": 999999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "26 - Conflict - Service DELETE /tape-specs/{{tapeSpecId}} while in use (expect 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 expected', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs/{{tapeSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs",
+                "{{tapeSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "27 - Conflict - Service DELETE /report-specs/{{reportSpecId}} while in use (expect 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 expected', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/report-specs/{{reportSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs",
+                "{{reportSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "28 - Cleanup - Operator DELETE /reports/{{reportId}} (expect 204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 expected', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "29 - Cleanup - Operator DELETE /jobs/{{jobId}}/cylinders/{{cylinderId}} (expect 204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 expected', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}/cylinders/{{cylinderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}",
+                "cylinders",
+                "{{cylinderId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "30 - Cleanup - Operator DELETE /jobs/{{jobId}} (expect 204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 expected', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "31 - Cleanup - Service DELETE /tape-specs/{{tapeSpecId}} (expect 204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 expected', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs/{{tapeSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs",
+                "{{tapeSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "32 - Cleanup - Service DELETE /report-specs/{{reportSpecId}} (expect 204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 expected', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{service_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/report-specs/{{reportSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "report-specs",
+                "{{reportSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "33 - Negative - GET deleted Job should be 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 expected', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "34 - Negative - GET deleted TapeSpec should be 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 expected', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tape-specs/{{tapeSpecId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tape-specs",
+                "{{tapeSpecId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "35 - Negative - DELETE already deleted Report should be 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 expected', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{operator_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/{{reportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "{{reportId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "keycloak_token_url",
+      "value": "http://localhost:9090/realms/WBJE/protocol/openid-connect/token"
+    },
+    {
+      "key": "client_id",
+      "value": "WBJEBackend"
+    },
+    {
+      "key": "client_secret",
+      "value": "O5or54CsqQV9pYZYPLHVL4uvYjV4dDWb"
+    },
+    {
+      "key": "operator_username",
+      "value": "Operator"
+    },
+    {
+      "key": "operator_password",
+      "value": "password"
+    },
+    {
+      "key": "service_username",
+      "value": "Service"
+    },
+    {
+      "key": "service_password",
+      "value": "password"
+    },
+    {
+      "key": "operator_token",
+      "value": ""
+    },
+    {
+      "key": "service_token",
+      "value": ""
+    },
+    {
+      "key": "tapeSpecId",
+      "value": ""
+    },
+    {
+      "key": "reportSpecId",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    },
+    {
+      "key": "cylinderId",
+      "value": ""
+    },
+    {
+      "key": "reportId",
+      "value": ""
+    },
+    {
+      "key": "operator_job_id",
+      "value": ""
+    },
+    {
+      "key": "admin_tape_spec_id",
+      "value": ""
+    },
+    {
+      "key": "admin_report_spec_id",
+      "value": ""
+    },
+    {
+      "key": "admin_template_id",
+      "value": ""
+    }
+  ]
+}

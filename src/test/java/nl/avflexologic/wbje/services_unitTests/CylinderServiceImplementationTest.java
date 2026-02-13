@@ -64,17 +64,11 @@ class CylinderServiceImplementationTest {
                 tapeSpecId
         );
 
-        /*
-         * A spy is used to validate that the service manipulates the aggregate root (Job) as intended.
-         * The production code adds the cylinder via Job to keep the association consistent.
-         */
         JobEntity job = spy(new JobEntity(LocalDateTime.now()));
         TapeSpecEntity tapeSpec = new TapeSpecEntity();
 
         CylinderEntity mappedCylinder = mock(CylinderEntity.class);
         CylinderEntity savedCylinder = mock(CylinderEntity.class);
-
-
 
         CylinderResponseDTO response = new CylinderResponseDTO(
                 100L,
@@ -86,36 +80,65 @@ class CylinderServiceImplementationTest {
                 null
         );
 
+        when(jobRepository.findById(jobId))
+                .thenReturn(Optional.of(job));
 
-        when(jobRepository.findById(jobId)).thenReturn(Optional.of(job));
-        when(tapeSpecRepository.findById(tapeSpecId)).thenReturn(Optional.of(tapeSpec));
-        when(cylinderDTOMapper.mapToEntity(request, job, tapeSpec)).thenReturn(mappedCylinder);
-        when(cylinderRepository.save(mappedCylinder)).thenReturn(savedCylinder);
-        when(cylinderDTOMapper.mapToDto(savedCylinder)).thenReturn(response);
+        when(tapeSpecRepository.findById(tapeSpecId))
+                .thenReturn(Optional.of(tapeSpec));
+
+        // 🔹 MUST be stubbed (duplicate cylinderNr within job)
+        when(cylinderRepository.existsByJobIdAndCylinderNr(jobId, 1))
+                .thenReturn(false);
+
+        when(cylinderDTOMapper.mapToEntity(request, job, tapeSpec))
+                .thenReturn(mappedCylinder);
+
+        when(cylinderRepository.save(mappedCylinder))
+                .thenReturn(savedCylinder);
+
+        when(cylinderDTOMapper.mapToDto(savedCylinder))
+                .thenReturn(response);
 
         // Act
-        CylinderResponseDTO result = cylinderService.createCylinder(jobId, request);
+        CylinderResponseDTO result =
+                cylinderService.createCylinder(jobId, request);
 
         // Assert
-        assertNotNull(result, "A successful create operation must return a response DTO.");
-        assertEquals(100L, result.id(), "The returned id must match the mapped response.");
-        assertEquals(1, result.cylinderNr(), "The returned cylinderNr must match the mapped response.");
-        assertEquals(jobId, result.jobId(), "The returned jobId must match the request context.");
-        assertEquals(tapeSpecId, result.tapeSpecId(), "The returned tapeSpecId must match the request.");
+        assertNotNull(result);
+        assertEquals(100L, result.id());
+        assertEquals(1, result.cylinderNr());
+        assertEquals("Cyan", result.color());
+        assertEquals("Cylinder info", result.cylinderInfo());
+        assertEquals(jobId, result.jobId());
+        assertEquals(tapeSpecId, result.tapeSpecId());
 
-        /*
-         * The job aggregate is expected to be updated via addCylinder() before persisting.
-         * This verifies that the service enforces aggregate consistency (bidirectional relation).
-         */
+        // Aggregate consistency
         verify(job, times(1)).addCylinder(mappedCylinder);
 
         verify(jobRepository, times(1)).findById(jobId);
         verify(tapeSpecRepository, times(1)).findById(tapeSpecId);
-        verify(cylinderDTOMapper, times(1)).mapToEntity(request, job, tapeSpec);
-        verify(cylinderRepository, times(1)).save(mappedCylinder);
-        verify(cylinderDTOMapper, times(1)).mapToDto(savedCylinder);
-        verifyNoMoreInteractions(jobRepository, tapeSpecRepository, cylinderRepository, cylinderDTOMapper);
+
+        // 🔹 Verify duplicate check
+        verify(cylinderRepository, times(1))
+                .existsByJobIdAndCylinderNr(jobId, 1);
+
+        verify(cylinderDTOMapper, times(1))
+                .mapToEntity(request, job, tapeSpec);
+
+        verify(cylinderRepository, times(1))
+                .save(mappedCylinder);
+
+        verify(cylinderDTOMapper, times(1))
+                .mapToDto(savedCylinder);
+
+        verifyNoMoreInteractions(
+                jobRepository,
+                tapeSpecRepository,
+                cylinderRepository,
+                cylinderDTOMapper
+        );
     }
+
 
     @Test
     void createCylinder_jobMissing() {

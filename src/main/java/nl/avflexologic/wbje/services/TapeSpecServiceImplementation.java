@@ -38,6 +38,12 @@ public class TapeSpecServiceImplementation implements TapeSpecService {
      */
     @Override
     public TapeSpecResponseDTO createTapeSpec(TapeSpecRequestDTO request) {
+        // unique tapeName
+        if (tapeSpecRepository.existsByTapeName(request.tapeName())) {
+            throw new IllegalArgumentException(
+                    "TapeSpec with name '" + request.tapeName() + "' already exists."
+            );
+        }
         TapeSpecEntity entity = tapeSpecDTOMapper.mapToEntity(request);
         TapeSpecEntity saved = tapeSpecRepository.save(entity);
         return tapeSpecDTOMapper.mapToDto(saved);
@@ -66,9 +72,16 @@ public class TapeSpecServiceImplementation implements TapeSpecService {
      */
     @Override
     public TapeSpecResponseDTO updateTapeSpec(Long id, TapeSpecRequestDTO request) {
+
+
         TapeSpecEntity existing = tapeSpecRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TapeSpec not found for id: " + id));
-
+// unique tapeName (exclude current entity)
+        if (tapeSpecRepository.existsByTapeNameAndIdNot(request.tapeName(), id)) {
+            throw new IllegalArgumentException(
+                    "TapeSpec with name '" + request.tapeName() + "' already exists."
+            );
+        }
         tapeSpecDTOMapper.updateEntity(existing, request);
 
         TapeSpecEntity saved = tapeSpecRepository.save(existing);

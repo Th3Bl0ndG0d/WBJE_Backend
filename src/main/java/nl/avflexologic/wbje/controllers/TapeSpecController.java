@@ -15,6 +15,7 @@ import nl.avflexologic.wbje.dtos.error.ApiErrorDTO;
 import nl.avflexologic.wbje.dtos.tape.TapeSpecRequestDTO;
 import nl.avflexologic.wbje.dtos.tape.TapeSpecResponseDTO;
 import nl.avflexologic.wbje.services.TapeSpecService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -90,6 +91,7 @@ public class TapeSpecController {
             )
     )
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     public TapeSpecResponseDTO createTapeSpec(
             @Valid @org.springframework.web.bind.annotation.RequestBody TapeSpecRequestDTO request
@@ -257,6 +259,7 @@ public class TapeSpecController {
                     content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteTapeSpec(@PathVariable Long id) {
         tapeSpecService.deleteTapeSpec(id);

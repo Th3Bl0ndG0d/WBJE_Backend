@@ -1,12 +1,14 @@
-package nl.avflexologic.wbje.services;
+package nl.avflexologic.wbje.services_unitTests;
 
 import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecRequestDTO;
 import nl.avflexologic.wbje.dtos.reportSpec.ReportSpecResponseDTO;
 import nl.avflexologic.wbje.entities.ReportSpecEntity;
+import nl.avflexologic.wbje.exceptions.EntityInUseException;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.mappers.ReportSpecDTOMapper;
 import nl.avflexologic.wbje.repositories.ReportRepository;
 import nl.avflexologic.wbje.repositories.ReportSpecRepository;
+import nl.avflexologic.wbje.services.ReportSpecServiceImplementation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -54,11 +56,6 @@ class ReportSpecServiceImplementationTest {
                 "Default plate spec"
         );
 
-        /*
-         * The entity id is database-generated (JPA @GeneratedValue).
-         * This test avoids stubbing getId() on the saved entity, because the returned DTO is provided
-         * by the mapper stub and does not require entity state access.
-         */
         ReportSpecEntity mapped = mock(ReportSpecEntity.class);
         ReportSpecEntity saved = mock(ReportSpecEntity.class);
 
@@ -70,30 +67,44 @@ class ReportSpecServiceImplementationTest {
                 "Default plate spec"
         );
 
+        // Duplicate check must be stubbed
+        when(reportSpecRepository.existsByReportName("Plate A"))
+                .thenReturn(false);
+
         when(reportSpecDTOMapper.mapToEntity(request)).thenReturn(mapped);
         when(reportSpecRepository.save(mapped)).thenReturn(saved);
         when(reportSpecDTOMapper.mapToDto(saved)).thenReturn(response);
 
-        ArgumentCaptor<ReportSpecEntity> captor = ArgumentCaptor.forClass(ReportSpecEntity.class);
+        ArgumentCaptor<ReportSpecEntity> captor =
+                ArgumentCaptor.forClass(ReportSpecEntity.class);
 
         // Act
-        ReportSpecResponseDTO result = reportSpecService.createReportSpec(request);
+        ReportSpecResponseDTO result =
+                reportSpecService.createReportSpec(request);
 
         // Assert
-        assertNotNull(result, "A successful create operation must return a response DTO.");
-        assertEquals(1L, result.id(), "The response id must reflect the mapper output.");
-        assertEquals("Plate A", result.reportName(), "The response must reflect the mapped reportName.");
-        assertEquals("Photopolymer", result.reportType(), "The response must reflect the mapped reportType.");
-        assertEquals(67, result.thickness(), "The response must reflect the mapped thickness.");
-        assertEquals("Default plate spec", result.info(), "The response must reflect the mapped info.");
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        assertEquals("Plate A", result.reportName());
+        assertEquals("Photopolymer", result.reportType());
+        assertEquals(67, result.thickness());
+        assertEquals("Default plate spec", result.info());
 
-        verify(reportSpecDTOMapper, times(1)).mapToEntity(request);
-        verify(reportSpecRepository, times(1)).save(captor.capture());
-        verify(reportSpecDTOMapper, times(1)).mapToDto(saved);
+        verify(reportSpecRepository, times(1))
+                .existsByReportName("Plate A");
+
+        verify(reportSpecDTOMapper, times(1))
+                .mapToEntity(request);
+
+        verify(reportSpecRepository, times(1))
+                .save(captor.capture());
+
+        verify(reportSpecDTOMapper, times(1))
+                .mapToDto(saved);
+
         verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
 
-        assertSame(mapped, captor.getValue(),
-                "The service must persist the entity instance returned by the mapper.");
+        assertSame(mapped, captor.getValue());
     }
 
     @Test
@@ -242,9 +253,18 @@ class ReportSpecServiceImplementationTest {
         ReportSpecEntity existing = mock(ReportSpecEntity.class);
         ReportSpecEntity saved = mock(ReportSpecEntity.class);
 
-        when(reportSpecRepository.findById(id)).thenReturn(Optional.of(existing));
-        doNothing().when(reportSpecDTOMapper).updateEntity(existing, request);
-        when(reportSpecRepository.save(existing)).thenReturn(saved);
+        when(reportSpecRepository.findById(id))
+                .thenReturn(Optional.of(existing));
+
+        // 🔹 Duplicate check must be stubbed
+        when(reportSpecRepository.existsByReportNameAndIdNot("Plate B", id))
+                .thenReturn(false);
+
+        doNothing().when(reportSpecDTOMapper)
+                .updateEntity(existing, request);
+
+        when(reportSpecRepository.save(existing))
+                .thenReturn(saved);
 
         ReportSpecResponseDTO response = new ReportSpecResponseDTO(
                 id,
@@ -253,23 +273,38 @@ class ReportSpecServiceImplementationTest {
                 80,
                 "Updated spec"
         );
-        when(reportSpecDTOMapper.mapToDto(saved)).thenReturn(response);
+
+        when(reportSpecDTOMapper.mapToDto(saved))
+                .thenReturn(response);
 
         // Act
-        ReportSpecResponseDTO result = reportSpecService.updateReportSpec(id, request);
+        ReportSpecResponseDTO result =
+                reportSpecService.updateReportSpec(id, request);
 
         // Assert
-        assertNotNull(result, "A successful update operation must return a response DTO.");
-        assertEquals(id, result.id(), "The response id must preserve the requested identifier.");
-        assertEquals("Plate B", result.reportName(), "The response must reflect the updated reportName.");
-        assertEquals("Updated spec", result.info(), "The response must reflect the updated info.");
+        assertNotNull(result);
+        assertEquals(id, result.id());
+        assertEquals("Plate B", result.reportName());
+        assertEquals("Updated spec", result.info());
 
-        verify(reportSpecRepository, times(1)).findById(id);
-        verify(reportSpecDTOMapper, times(1)).updateEntity(existing, request);
-        verify(reportSpecRepository, times(1)).save(existing);
-        verify(reportSpecDTOMapper, times(1)).mapToDto(saved);
+        verify(reportSpecRepository, times(1))
+                .findById(id);
+
+        verify(reportSpecRepository, times(1))
+                .existsByReportNameAndIdNot("Plate B", id);
+
+        verify(reportSpecDTOMapper, times(1))
+                .updateEntity(existing, request);
+
+        verify(reportSpecRepository, times(1))
+                .save(existing);
+
+        verify(reportSpecDTOMapper, times(1))
+                .mapToDto(saved);
+
         verifyNoMoreInteractions(reportSpecRepository, reportSpecDTOMapper);
     }
+
 
     @Test
     void deleteReportSpec_notFound() {
@@ -290,6 +325,82 @@ class ReportSpecServiceImplementationTest {
         verify(reportSpecRepository, times(1)).existsById(id);
         verifyNoMoreInteractions(reportSpecRepository);
         verifyNoInteractions(reportSpecDTOMapper);
+    }
+    @Test
+    void createReportSpec_whenDuplicateName_throwsIllegalArgumentException() {
+        // Arrange
+        ReportSpecRequestDTO request =
+                new ReportSpecRequestDTO("R1", "Toyobo", 170, "type");
+
+        when(reportSpecRepository.existsByReportName("R1"))
+                .thenReturn(true);
+
+        // Act + Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> reportSpecService.createReportSpec(request));
+
+        verify(reportSpecRepository).existsByReportName("R1");
+        verify(reportSpecRepository, never()).save(any());
+    }
+
+    @Test
+    void updateReportSpec_whenDuplicateName_throwsIllegalArgumentException() {
+        // Arrange
+        Long id = 1L;
+
+        ReportSpecEntity existing = new ReportSpecEntity();
+        existing.setReportName("OLD");
+
+        ReportSpecRequestDTO request =
+                new ReportSpecRequestDTO("NEW", "Toyobo", 170, "type");
+
+        when(reportSpecRepository.findById(id))
+                .thenReturn(Optional.of(existing));
+
+        when(reportSpecRepository.existsByReportNameAndIdNot("NEW", id))
+                .thenReturn(true);
+
+        // Act + Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> reportSpecService.updateReportSpec(id, request));
+
+        verify(reportSpecRepository).existsByReportNameAndIdNot("NEW", id);
+        verify(reportSpecRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteReportSpec_whenNotFound_throwsResourceNotFoundException() {
+        // Arrange
+        Long id = 1L;
+        when(reportSpecRepository.existsById(id))
+                .thenReturn(false);
+
+        // Act + Assert
+        assertThrows(ResourceNotFoundException.class,
+                () -> reportSpecService.deleteReportSpec(id));
+
+        verify(reportSpecRepository).existsById(id);
+        verifyNoInteractions(reportRepository);
+    }
+
+    @Test
+    void deleteReportSpec_whenInUse_throwsEntityInUseException() {
+        // Arrange
+        Long id = 1L;
+
+        when(reportSpecRepository.existsById(id))
+                .thenReturn(true);
+
+        when(reportRepository.existsByReportSpecId(id))
+                .thenReturn(true);
+
+        // Act + Assert
+        assertThrows(EntityInUseException.class,
+                () -> reportSpecService.deleteReportSpec(id));
+
+        verify(reportSpecRepository).existsById(id);
+        verify(reportRepository).existsByReportSpecId(id);
+        verify(reportSpecRepository, never()).deleteById(any());
     }
 
     @Test

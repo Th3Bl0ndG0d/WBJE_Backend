@@ -3,14 +3,19 @@ package nl.avflexologic.wbje.entities;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "report_specs")
+@Table(
+        name = "report_specs",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_report_specs_report_name", columnNames = "report_name")
+        }
+)
 public class ReportSpecEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "report_name", length = 255)
+    @Column(name = "report_name", length = 255, nullable = false)
     private String reportName;
 
     @Column(name = "report_type", length = 255)
@@ -61,6 +66,7 @@ public class ReportSpecEntity {
     public void setInfo(String info) {
         this.info = info;
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -73,5 +79,4 @@ public class ReportSpecEntity {
     public int hashCode() {
         return getClass().hashCode();
     }
-
 }

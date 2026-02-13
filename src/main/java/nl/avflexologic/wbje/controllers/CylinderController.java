@@ -400,16 +400,7 @@ public class CylinderController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "204",
-                    description = "Cylinder successfully deleted.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "CylinderDeleteExample",
-                                    value = """
-                                            // No content is returned for a successful delete (HTTP 204).
-                                            """
-                            )
-                    )
+                    description = "Cylinder successfully deleted."
             ),
             @ApiResponse(
                     responseCode = "404",

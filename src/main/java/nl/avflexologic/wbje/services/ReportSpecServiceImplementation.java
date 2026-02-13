@@ -32,6 +32,12 @@ public class ReportSpecServiceImplementation implements ReportSpecService {
 
     @Override
     public ReportSpecResponseDTO createReportSpec(ReportSpecRequestDTO request) {
+        // 🔹 Business validation: unique reportName
+        if (reportSpecRepository.existsByReportName(request.reportName())) {
+            throw new IllegalArgumentException(
+                    "ReportSpec with name '" + request.reportName() + "' already exists."
+            );
+        }
         ReportSpecEntity entity = reportSpecDTOMapper.mapToEntity(request);
         ReportSpecEntity saved = reportSpecRepository.save(entity);
         return reportSpecDTOMapper.mapToDto(saved);
@@ -53,7 +59,12 @@ public class ReportSpecServiceImplementation implements ReportSpecService {
     public ReportSpecResponseDTO updateReportSpec(Long id, ReportSpecRequestDTO request) {
         ReportSpecEntity existing = reportSpecRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReportSpec not found for id: " + id));
-
+        // unique reportName (exclude current entity)
+        if (reportSpecRepository.existsByReportNameAndIdNot(request.reportName(), id)) {
+            throw new IllegalArgumentException(
+                    "ReportSpec with name '" + request.reportName() + "' already exists."
+            );
+        }
         reportSpecDTOMapper.updateEntity(existing, request);
 
         ReportSpecEntity saved = reportSpecRepository.save(existing);

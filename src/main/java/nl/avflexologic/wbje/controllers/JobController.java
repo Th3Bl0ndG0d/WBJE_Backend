@@ -1,6 +1,7 @@
 package nl.avflexologic.wbje.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -125,8 +126,13 @@ public class JobController {
     @ApiResponse(
             responseCode = "200",
             description = "List successfully retrieved.",
-            content = @Content(schema = @Schema(implementation = JobResponseDTO.class))
+            content = @Content(
+                    array = @ArraySchema(
+                            schema = @Schema(implementation = JobResponseDTO.class)
+                    )
+            )
     )
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<JobResponseDTO>> getAllJobs() {
@@ -174,7 +180,7 @@ public class JobController {
             security = @SecurityRequirement(name = "keycloak", scopes = {"service", "operator"})
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Job deleted."),
+            @ApiResponse(responseCode = "204", description = "Job deleted."),
             @ApiResponse(responseCode = "404", description = "Job not found",
                     content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))
     })
@@ -182,7 +188,7 @@ public class JobController {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         jobService.deleteJob(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
     //    ////    @PostMapping("/full")
 //    ////    public ResponseEntity<JobResponseDTO> createFullJobFromJson(
