@@ -2,6 +2,7 @@ package nl.avflexologic.wbje.services_unitTests;
 
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
+import nl.avflexologic.wbje.dtos.note.NoteRequestDTO;
 import nl.avflexologic.wbje.entities.JobEntity;
 import nl.avflexologic.wbje.exceptions.ResourceNotFoundException;
 import nl.avflexologic.wbje.repositories.JobRepository;
@@ -102,7 +103,11 @@ class JobServiceImplementationTest {
         assertEquals(request.getCylinderWidth(), response.cylinderWidth, "The response cylinderWidth must reflect the persisted entity.");
         assertEquals(request.getCylinderCircumference(), response.cylinderCircumference, "The response cylinderCircumference must reflect the persisted entity.");
         assertEquals(request.getInfo(), response.info, "The response info must reflect the persisted entity.");
-        assertEquals(request.getNoteInfo(), response.noteInfo, "The response noteInfo must reflect the mapped note information.");
+        assertNotNull(response.note,
+                "The response must contain a mapped note object.");
+        assertEquals(request.getNote().content(), response.note.content(),
+                "The response note content must reflect the mapped note information.");
+
     }
 
     @Test
@@ -265,7 +270,8 @@ class JobServiceImplementationTest {
         request.setCylinderWidth(850);
         request.setCylinderCircumference(1300);
         request.setInfo("New info");
-        request.setNoteInfo("New note");
+        request.setNote(new NoteRequestDTO("New note"));
+
 
         when(jobRepository.findById(5L)).thenReturn(Optional.of(existing));
         when(jobRepository.save(any(JobEntity.class))).thenAnswer(invocation -> invocation.getArgument(0, JobEntity.class));
@@ -301,7 +307,11 @@ class JobServiceImplementationTest {
         assertEquals(850, response.cylinderWidth, "The response cylinderWidth must reflect the updated value.");
         assertEquals(1300, response.cylinderCircumference, "The response cylinderCircumference must reflect the updated value.");
         assertEquals("New info", response.info, "The response info must reflect the updated value.");
-        assertEquals("New note", response.noteInfo, "The response noteInfo must reflect the updated note mapping.");
+        assertNotNull(response.note,
+                "The response must contain the updated note.");
+        assertEquals("New note", response.note.content(),
+                "The response note content must reflect the updated note mapping.");
+
     }
 
     @Test
@@ -441,7 +451,10 @@ class JobServiceImplementationTest {
         request.setCylinderWidth(850);
         request.setCylinderCircumference(1300);
         request.setInfo("Operator note: validate substrate batch before start.");
-        request.setNoteInfo("Repeat run, verify plate wear on station 2.");
+        request.setNote(
+                new NoteRequestDTO("Repeat run, verify plate wear on station 2.")
+        );
+
 
         return request;
     }

@@ -2,6 +2,7 @@ package nl.avflexologic.wbje.mappers;
 
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
+import nl.avflexologic.wbje.dtos.note.NoteResponseDTO;
 import nl.avflexologic.wbje.entities.JobEntity;
 import nl.avflexologic.wbje.entities.NoteEntity;
 
@@ -15,8 +16,9 @@ public class JobDTOMapper {
         job.setCylinderCircumference(dto.getCylinderCircumference());
         job.setInfo(dto.getInfo());
 
-        if (dto.getNoteInfo() != null && !dto.getNoteInfo().isBlank()) {
-            job.setNote(new NoteEntity(dto.getNoteInfo()));
+        if (dto.getNote() != null && dto.getNote().content() != null
+                && !dto.getNote().content().isBlank()) {
+            job.setNote(new NoteEntity(dto.getNote().content()));
         } else {
             job.setNote(null);
         }
@@ -35,12 +37,15 @@ public class JobDTOMapper {
         job.setCylinderCircumference(dto.getCylinderCircumference());
         job.setInfo(dto.getInfo());
 
-        if (dto.getNoteInfo() != null && !dto.getNoteInfo().isBlank()) {
+        if (dto.getNote() != null && dto.getNote().content() != null
+                && !dto.getNote().content().isBlank()) {
+
             if (job.getNote() == null) {
-                job.setNote(new NoteEntity(dto.getNoteInfo()));
+                job.setNote(new NoteEntity(dto.getNote().content()));
             } else {
-                job.getNote().setInfo(dto.getNoteInfo());
+                job.getNote().setInfo(dto.getNote().content());
             }
+
         } else {
             job.setNote(null);
         }
@@ -57,7 +62,10 @@ public class JobDTOMapper {
         dto.info = job.getInfo();
 
         if (job.getNote() != null) {
-            dto.noteInfo = job.getNote().getInfo();
+            dto.note = new NoteResponseDTO(
+                    job.getNote().getJobId(),
+                    job.getNote().getInfo()
+            );
         }
         if (job.getCylinders() != null && !job.getCylinders().isEmpty()) {
             dto.cylinders = job.getCylinders().stream()

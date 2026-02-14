@@ -90,11 +90,18 @@ public class JobAssemblyService {
         jobDto.setCylinderWidth(jobNode.get("cylinderWidth").asInt());
         jobDto.setCylinderCircumference(jobNode.get("cylinderCircumference").asInt());
         jobDto.setInfo(jobNode.get("info").asText());
-        jobDto.setNoteInfo(
-                jobNode.has("noteInfo") && !jobNode.get("noteInfo").isNull()
-                        ? jobNode.get("noteInfo").asText()
-                        : null
-        );
+        if (jobNode.has("note") && !jobNode.get("note").isNull()) {
+            JsonNode noteNode = jobNode.get("note");
+
+            if (noteNode.has("content") && !noteNode.get("content").isNull()) {
+                jobDto.setNote(
+                        new nl.avflexologic.wbje.dtos.note.NoteRequestDTO(
+                                noteNode.get("content").asText()
+                        )
+                );
+            }
+        }
+
 
         JobResponseDTO createdJob = jobService.createJob(jobDto);
         Long jobId = createdJob.id;

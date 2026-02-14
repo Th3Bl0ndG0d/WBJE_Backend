@@ -46,7 +46,7 @@ public class ApiErrorDTO {
      */
     @Schema(
             description = "Optional map containing field-level validation errors keyed by field name.",
-            example = "{\"jobNumber\":\"must not be blank\"}"
+            example = "{ \"jobNumber\": \"must not be blank\" }"
     )
     public Map<String, String> fieldErrors;
 }

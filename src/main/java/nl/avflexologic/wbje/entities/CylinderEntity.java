@@ -13,6 +13,7 @@ import java.util.Objects;
                 @UniqueConstraint(name = "uk_cylinder_job_nr", columnNames = {"job_id", "cylinder_nr"})
         }
 )
+
 public class CylinderEntity {
 
     @Id

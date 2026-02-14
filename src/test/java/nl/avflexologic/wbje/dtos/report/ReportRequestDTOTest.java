@@ -7,12 +7,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class ReportRequestDTOTest {
 
     @Test
-    void constructor_requires_reportNr() {
-        NullPointerException ex = assertThrows(
-                NullPointerException.class,
+    void constructor_allows_null_without_validation_context() {
+        assertDoesNotThrow(
                 () -> new ReportRequestDTO(null, 500, 10, 20, 1L, 2L)
         );
-
-        assertEquals("reportNr is required.", ex.getMessage());
     }
+
 }

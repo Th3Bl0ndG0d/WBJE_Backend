@@ -1,6 +1,10 @@
 package nl.avflexologic.wbje.dtos.job;
+
+import nl.avflexologic.wbje.dtos.note.NoteResponseDTO;
 import org.junit.jupiter.api.Test;
+
 import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class JobResponseDTOTest {
@@ -17,7 +21,7 @@ class JobResponseDTOTest {
         dto.info = "Info";
         dto.cylinderWidth = 120;
         dto.cylinderCircumference = 800;
-        dto.noteInfo = "Note text";
+        dto.note = new NoteResponseDTO(1L, "Note text");
 
         assertEquals(1L, dto.id);
         assertEquals("JB-1001", dto.jobNumber);
@@ -26,6 +30,8 @@ class JobResponseDTOTest {
         assertEquals("Info", dto.info);
         assertEquals(120, dto.cylinderWidth);
         assertEquals(800, dto.cylinderCircumference);
-        assertEquals("Note text", dto.noteInfo);
+
+        assertNotNull(dto.note);
+        assertEquals("Note text", dto.note.content());
     }
 }

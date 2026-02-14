@@ -3,8 +3,12 @@ package nl.avflexologic.wbje.dtos.job;
 import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import nl.avflexologic.wbje.dtos.note.NoteRequestDTO;
+
 /**
  * Request payload used to create or update a job.
  */
@@ -18,7 +22,8 @@ public class JobRequestDTO {
     public String jobNumber;
     @Schema(
             description = "Scheduled date and time of the job.",
-            example = "2025-01-15T08:30:00"
+            example = "2025-01-15T08:30:00",
+            requiredMode = Schema.RequiredMode.REQUIRED
     )
     @NotNull(message = "jobDate is required.")
     public LocalDateTime jobDate;
@@ -28,15 +33,30 @@ public class JobRequestDTO {
     )
     @Size(max = 255, message = "jobName must not exceed 255 characters.")
     public String jobName;
-    @Schema(description = "Effective cylinder width in millimetres.", example = "850")
+    @Schema(
+            description = "Effective cylinder width in millimetres.",
+            example = "850",
+            minimum = "0",
+            maximum = "168000"
+    )
+    @Min(0)
+    @Max(168000)
     public Integer cylinderWidth;
-    @Schema(description = "Effective cylinder circumference in millimetres.", example = "1100")
+    @Schema(
+            description = "Effective cylinder circumference in micrometers.",
+            example = "1100",
+            minimum = "0",
+            maximum = "1250000"
+    )
+    @Min(0)
+    @Max(1250000)
     public Integer cylinderCircumference;
     @Schema(description = "Optional internal note or technical information for this job.", example = "Use stickyback type A, check register on station 3.")
     @Size(max = 255, message = "info must not exceed 255 characters.")
     public String info;
-    @Schema(description = "Optional operator note attached to the job.", example = "Repeat run, verify plate wear on station 2.")
-    public String noteInfo;
+    @Schema(description = "Optional note attached to the job.")
+    public NoteRequestDTO note;
+
 
 
 
@@ -92,11 +112,12 @@ public class JobRequestDTO {
         this.info = info;
     }
 
-    public String getNoteInfo() {
-        return noteInfo;
+    public NoteRequestDTO getNote() {
+        return note;
     }
 
-    public void setNoteInfo(String noteInfo) {
-        this.noteInfo = noteInfo;
+    public void setNote(NoteRequestDTO note) {
+        this.note = note;
     }
+
 }
