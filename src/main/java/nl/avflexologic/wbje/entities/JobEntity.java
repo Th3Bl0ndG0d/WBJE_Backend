@@ -1,7 +1,7 @@
 package nl.avflexologic.wbje.entities;
 
-
 import jakarta.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,64 +32,74 @@ public class JobEntity {
     @Column(name = "info", length = 255)
     private String info;
 
-
-
-
     protected JobEntity() { }
 
     public JobEntity(LocalDateTime jobDate) {
         this.jobDate = jobDate;
     }
+
     public Long getId() {
         return id;
     }
+
     public void setId(Long id) {
         this.id = id;
     }
+
     public String getJobNumber() {
         return jobNumber;
     }
+
     public void setJobNumber(String jobNumber) {
         this.jobNumber = jobNumber;
     }
+
     public LocalDateTime getJobDate() {
         return jobDate;
     }
+
     public void setJobDate(LocalDateTime jobDate) {
         this.jobDate = jobDate;
     }
+
     public String getJobName() {
         return jobName;
     }
+
     public void setJobName(String jobName) {
         this.jobName = jobName;
     }
+
     public Integer getCylinderWidth() {
         return cylinderWidth;
     }
+
     public void setCylinderWidth(Integer cylinderWidth) {
         this.cylinderWidth = cylinderWidth;
     }
+
     public Integer getCylinderCircumference() {
         return cylinderCircumference;
     }
+
     public void setCylinderCircumference(Integer cylinderCircumference) {
         this.cylinderCircumference = cylinderCircumference;
     }
+
     public String getInfo() {
         return info;
     }
+
     public void setInfo(String info) {
         this.info = info;
     }
 
-
-
-
     @OneToOne(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
     private NoteEntity note;
 
-    public NoteEntity getNote() { return note; }
+    public NoteEntity getNote() {
+        return note;
+    }
 
     /** Beheert de 1-1 relatie consistent. */
     public void setNote(NoteEntity note) {
@@ -108,6 +118,7 @@ public class JobEntity {
     public List<CylinderEntity> getCylinders() {
         return cylinders;
     }
+
     /** Keeps the 0..* relationship consistent. */
     public void addCylinder(CylinderEntity cylinder) {
         if (cylinder == null) return;
@@ -140,6 +151,4 @@ public class JobEntity {
     public int hashCode() {
         return getClass().hashCode();
     }
-
-
 }

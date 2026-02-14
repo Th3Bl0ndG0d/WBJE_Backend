@@ -1,6 +1,8 @@
 package nl.avflexologic.wbje.dtos.cylinder;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
 
@@ -9,8 +11,10 @@ public record CylinderRequestDTO(
 
         @Schema(
                 description = "Cylinder sequence number within the job. Must be unique per job.",
-                example = "1"
+                example = "1",
+                minimum = "1"
         )
+        @Min(1)
         Integer cylinderNr,
 
         @Schema(
@@ -25,9 +29,11 @@ public record CylinderRequestDTO(
         )
         String cylinderInfo,
 
+        @NotNull
         @Schema(
                 description = "Identifier of the TapeSpec used by this cylinder.",
-                example = "10"
+                example = "10",
+                requiredMode = Schema.RequiredMode.REQUIRED
         )
         Long tapeSpecId
 
@@ -37,7 +43,7 @@ public record CylinderRequestDTO(
      * Enforces mandatory request fields.
      */
     public CylinderRequestDTO {
-        Objects.requireNonNull(cylinderNr, "cylinderNr is required.");
-        Objects.requireNonNull(tapeSpecId, "tapeSpecId is required.");
+//        Objects.requireNonNull(cylinderNr, "cylinderNr is required.");
+//        Objects.requireNonNull(tapeSpecId, "tapeSpecId is required.");
     }
 }

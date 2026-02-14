@@ -54,16 +54,18 @@ class JobControllerIntegrationTest {
     void createJob_returnsPersistedJob() throws Exception {
         // Arrange
         String requestJson = """
-                {
-                  "jobNumber": "JOB-2025-001",
-                  "jobDate": "2025-12-22T10:00:00",
-                  "jobName": "Print job for customer X",
-                  "cylinderWidth": 850,
-                  "cylinderCircumference": 1300,
-                  "info": "Operator note: validate substrate batch before start.",
-                  "noteInfo": "Repeat run, verify plate wear on station 2."
-                }
-                """;
+            {
+              "jobNumber": "JOB-2025-001",
+              "jobDate": "2025-12-22T10:00:00",
+              "jobName": "Print job for customer X",
+              "cylinderWidth": 850,
+              "cylinderCircumference": 1300,
+              "info": "Operator note: validate substrate batch before start.",
+              "note": {
+                "content": "Repeat run, verify plate wear on station 2."
+              }
+            }
+            """;
 
         // Act
         MvcResult postResult = this.mockMvc
@@ -78,14 +80,11 @@ class JobControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.cylinderWidth", is(850)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.cylinderCircumference", is(1300)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.info", is("Operator note: validate substrate batch before start.")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.noteInfo", is("Repeat run, verify plate wear on station 2.")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.note").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.note.content",
+                        is("Repeat run, verify plate wear on station 2.")))
                 .andReturn();
 
-        // Assert
-        /*
-         * The POST response must contain an id. The id is extracted without object binding+
-         * to keep the test lightweight and focused on API behavior.
-         */
         long id = extractIdFromJson(postResult.getResponse().getContentAsString());
 
         this.mockMvc
@@ -97,6 +96,7 @@ class JobControllerIntegrationTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.jobNumber", is("JOB-2025-001")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.jobName", is("Print job for customer X")));
     }
+
 
     @Test
     void getJobById_returnsExpectedPayload() throws Exception {

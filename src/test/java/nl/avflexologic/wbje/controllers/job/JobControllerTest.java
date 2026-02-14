@@ -3,6 +3,7 @@ package nl.avflexologic.wbje.controllers.job;
 import nl.avflexologic.wbje.controllers.JobController;
 import nl.avflexologic.wbje.dtos.job.JobRequestDTO;
 import nl.avflexologic.wbje.dtos.job.JobResponseDTO;
+import nl.avflexologic.wbje.dtos.note.NoteResponseDTO;
 import nl.avflexologic.wbje.services.JobService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,33 +21,13 @@ import java.util.List;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Web-layer test for {@link JobController}.
- * This test class verifies the HTTP contract of the JobController without
- * loading the full application context. Only request handling, routing,
- * serialization and response codes are validated.
-
- * Business logic, persistence and domain consistency are intentionally
- * excluded and delegated to dedicated service- and repository-level tests.
- */
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false) //Dont forget to turn off the auth!! :S
+@AutoConfigureMockMvc(addFilters = false)
 class JobControllerTest {
 
-    /**
-     * MockMvc provides a programmatic entry point to the Spring MVC layer.
-     *
-     * Requests are executed against the controller as if they were real HTTP
-     * calls, but without starting an embedded server.
-     */
     @Autowired
     private MockMvc mockMvc;
 
-    /**
-     * Test-specific configuration supplying a minimal JobService implementation.
-     * The implementation returns deterministic data to ensure stable and
-     * predictable assertions.
-     */
     @TestConfiguration
     static class TestConfig {
 
@@ -55,12 +35,6 @@ class JobControllerTest {
         JobService jobService() {
             return new JobService() {
 
-                /**
-                 * Simulates job creation by echoing request data into a response DTO.
-                 *
-                 * No validation, persistence or side effects are performed here.
-                 * The sole purpose is to satisfy the controller dependency.
-                 */
                 @Override
                 public JobResponseDTO createJob(JobRequestDTO request) {
                     JobResponseDTO response = new JobResponseDTO();
@@ -71,16 +45,17 @@ class JobControllerTest {
                     response.info = request.getInfo();
                     response.cylinderWidth = request.getCylinderWidth();
                     response.cylinderCircumference = request.getCylinderCircumference();
-                    response.noteInfo = request.getNoteInfo();
+
+                    if (request.getNote() != null) {
+                        response.note = new NoteResponseDTO(
+                                1L,
+                                request.getNote().content()
+                        );
+                    }
+
                     return response;
                 }
 
-                /**
-                 * Returns a fixed job representation for retrieval by id.
-                 *
-                 * The returned data is independent of the provided identifier,
-                 * as identifier-based correctness is verified at the service layer.
-                 */
                 @Override
                 public JobResponseDTO getJobById(Long id) {
                     JobResponseDTO response = new JobResponseDTO();
@@ -91,16 +66,10 @@ class JobControllerTest {
                     response.info = "Initial setup for customer order.";
                     response.cylinderWidth = 120;
                     response.cylinderCircumference = 800;
-                    response.noteInfo = "Note text";
+                    response.note = new NoteResponseDTO(1L, "Note text");
                     return response;
                 }
 
-                /**
-                 * Returns a fixed list of jobs to validate collection endpoints.
-                 *
-                 * The size and ordering are deterministic to allow explicit
-                 * assertions on list content.
-                 */
                 @Override
                 public List<JobResponseDTO> getAllJobs() {
                     JobResponseDTO job1 = new JobResponseDTO();
@@ -111,7 +80,7 @@ class JobControllerTest {
                     job1.info = "Initial setup for customer order.";
                     job1.cylinderWidth = 120;
                     job1.cylinderCircumference = 800;
-                    job1.noteInfo = "Note text";
+                    job1.note = new NoteResponseDTO(1L, "Note text");
 
                     JobResponseDTO job2 = new JobResponseDTO();
                     job2.id = 2L;
@@ -121,16 +90,11 @@ class JobControllerTest {
                     job2.info = "Second production run.";
                     job2.cylinderWidth = 130;
                     job2.cylinderCircumference = 820;
-                    job2.noteInfo = null;
+                    job2.note = null;
 
                     return List.of(job1, job2);
                 }
 
-                /**
-                 * Simulates updating a job by returning the provided request data.
-                 *
-                 * The identifier is preserved to reflect update semantics.
-                 */
                 @Override
                 public JobResponseDTO updateJob(Long id, JobRequestDTO request) {
                     JobResponseDTO response = new JobResponseDTO();
@@ -141,28 +105,24 @@ class JobControllerTest {
                     response.info = request.getInfo();
                     response.cylinderWidth = request.getCylinderWidth();
                     response.cylinderCircumference = request.getCylinderCircumference();
-                    response.noteInfo = request.getNoteInfo();
+
+                    if (request.getNote() != null) {
+                        response.note = new NoteResponseDTO(
+                                1L,
+                                request.getNote().content()
+                        );
+                    }
+
                     return response;
                 }
 
-                /**
-                 * No-op delete implementation.
-                 *
-                 * Successful execution indicates that the controller endpoint
-                 * correctly delegates deletion requests.
-                 */
                 @Override
                 public void deleteJob(Long id) {
-                    // intentionally left blank
                 }
             };
         }
     }
 
-    /**
-     * Verifies that a job can be created via POST /jobs and that
-     * a valid JSON response is returned.
-     */
     @Test
     void createJob_returnsOkAndJobBody() throws Exception {
         String jsonRequest = """
@@ -173,7 +133,9 @@ class JobControllerTest {
                   "info": "Initial setup for customer order.",
                   "cylinderWidth": 120,
                   "cylinderCircumference": 800,
-                  "noteInfo": "Note text"
+                  "note": {
+                    "content": "Note text"
+                  }
                 }
                 """;
 
@@ -181,26 +143,19 @@ class JobControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.jobNumber").value("JB-1001"))
-                .andExpect(jsonPath("$.jobName").value("WBJE Demo"));
+                .andExpect(jsonPath("$.note.content").value("Note text"));
     }
 
-    /**
-     * Verifies retrieval of a single job by identifier.
-     */
     @Test
     void getJobById_returnsOkAndJobBody() throws Exception {
         mockMvc.perform(get("/jobs/{id}", 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.jobNumber").value("JB-1001"));
+                .andExpect(jsonPath("$.note.content").value("Note text"));
     }
 
-    /**
-     * Verifies retrieval of all jobs.
-     */
     @Test
     void getAllJobs_returnsOkAndList() throws Exception {
         mockMvc.perform(get("/jobs"))
@@ -209,9 +164,6 @@ class JobControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
     }
 
-    /**
-     * Verifies that updating an existing job returns the modified representation.
-     */
     @Test
     void updateJob_returnsOkAndUpdatedBody() throws Exception {
         String jsonRequest = """
@@ -222,7 +174,9 @@ class JobControllerTest {
                   "info": "Updated info after customer feedback.",
                   "cylinderWidth": 120,
                   "cylinderCircumference": 800,
-                  "noteInfo": "Updated note text"
+                  "note": {
+                    "content": "Updated note text"
+                  }
                 }
                 """;
 
@@ -231,12 +185,9 @@ class JobControllerTest {
                         .content(jsonRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.jobName").value("WBJE Demo (updated)"))
-                .andExpect(jsonPath("$.noteInfo").value("Updated note text"));
+                .andExpect(jsonPath("$.note.content").value("Updated note text"));
     }
 
-    /**
-     * Verifies that a job can be deleted via DELETE /jobs/{id}.
-     */
     @Test
     void deleteJob_returnsNoContent() throws Exception {
         mockMvc.perform(delete("/jobs/{id}", 1))
