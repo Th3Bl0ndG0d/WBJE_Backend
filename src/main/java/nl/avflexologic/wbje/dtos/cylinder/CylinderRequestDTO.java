@@ -43,7 +43,6 @@ public record CylinderRequestDTO(
      * Enforces mandatory request fields.
      */
     public CylinderRequestDTO {
-//        Objects.requireNonNull(cylinderNr, "cylinderNr is required.");
-//        Objects.requireNonNull(tapeSpecId, "tapeSpecId is required.");
+
     }
 }
