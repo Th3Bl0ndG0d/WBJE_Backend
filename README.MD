@@ -718,7 +718,7 @@ Dit scenario gebruikt data uit `data.sql`. Het moet direct na applicatie-start w
 - Cleanup
 
 > ⚠️ Wanneer er tussentijds data is gewijzigd, kan dit scenario falen.
-
+> ⚠️ Bij de test “[SV] POST /job-templates – allowed (ROLE_ADMIN)” moet waarschijnlijk in Postman een daadwerkelijk testbestand worden geselecteerd in het `file`-veld. Indien hier geen bestand geselecteerd staat zal deze test dus valen.
 ------
 
 ### Test 2
