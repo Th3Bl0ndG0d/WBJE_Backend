@@ -5,33 +5,33 @@
 - [1. Projectomschrijving](#1-projectomschrijving)
 
 - [2. Domeinmodel](#2-domeinmodel)
-    - [2.1 Omschrijving domeinmodel](#2-1-omschrijving-domeinmodel)
-    - [2.2 Entiteiten](#2-2-entiteiten)
+  - [2.1 Omschrijving domeinmodel](#2-1-omschrijving-domeinmodel)
+  - [2.2 Entiteiten](#2-2-entiteiten)
 
 - [3. Sequence diagrams](#3-sequence-diagrams)
-    - [3.1 Get Job](#3-1-get-job)
-    - [3.2 Omschrijving Get Job operatie](#3-2-omschrijving-get-job-operatie)
-    - [3.3 DELETE Report-Spec](#3-3-delete-job)
-    - [3.4 Omschrijving DELETE Report-Spec](#3-4-omschrijving-job-delete-operatie)
+  - [3.1 Get Job](#3-1-get-job)
+  - [3.2 Omschrijving Get Job operatie](#3-2-omschrijving-get-job-operatie)
+  - [3.3 DELETE Report-Spec](#3-3-delete-job)
+  - [3.4 Omschrijving DELETE Report-Spec](#3-4-omschrijving-job-delete-operatie)
 
 - [4. Installatie, configuratie en testen](#4-installatie-configuratie-en-testen)
-    - [4.1 Vereiste tools](#4-1-vereiste-tools)
-    - [4.2 Maven dependencies](#4-2-maven-dependencies)
-    - [4.3 Keycloak configuratie](#4-3-keycloak-configuratie-windows) (windows)
-        - [4.3.1 Installeren en starten](#4-3-1-installeren-en-starten)
-        - [4.3.2 Admin-account aanmaken](#4-3-2-admin-account-aanmaken)
-        - [4.3.3 WBJE-realm importeren](#4-3-3-wbje-realm-importeren)
-        - [4.3.4 Realmconfiguratie overzicht](#4-3-4-realmconfiguratie-overzicht)
-    - [4.4 PostgreSQL configuratie](#4-4-postgresql-database-configuratie)
-    - [4.5 API starten via IntelliJ](#4-5-api-starten-via-intellij)
-    - [4.6 Swagger en OpenAPI](#4-6-swagger-en-openapi)
-    - [4.7 Testen met Postman](#4-7-testen-met-postman)
-    - [4.8 Testen in IntelliJ IDEA 2025.2.1](#4-8-Testen-in-IntelliJ-IDEA-2025.2.1)
-    - [4.9 Tests uitvoeren](#4-9-tests-uitvoeren)
+  - [4.1 Vereiste tools](#4-1-vereiste-tools)
+  - [4.2 Maven dependencies](#4-2-maven-dependencies)
+  - [4.3 Keycloak configuratie](#4-3-keycloak-configuratie-windows) (windows)
+    - [4.3.1 Installeren en starten](#4-3-1-installeren-en-starten)
+    - [4.3.2 Admin-account aanmaken](#4-3-2-admin-account-aanmaken)
+    - [4.3.3 WBJE-realm importeren](#4-3-3-wbje-realm-importeren)
+    - [4.3.4 Realmconfiguratie overzicht](#4-3-4-realmconfiguratie-overzicht)
+  - [4.4 PostgreSQL configuratie](#4-4-postgresql-database-configuratie)
+  - [4.5 API starten via IntelliJ](#4-5-api-starten-via-intellij)
+  - [4.6 Swagger en OpenAPI](#4-6-swagger-en-openapi)
+  - [4.7 Testen met Postman](#4-7-testen-met-postman)
+  - [4.8 Testen in IntelliJ IDEA 2025.2.1](#4-8-Testen-in-IntelliJ-IDEA-2025.2.1)
+  - [4.9 Tests uitvoeren](#4-9-tests-uitvoeren)
 
 - [5. API-documentatie en endpoints](#5-api-documentatie-en-endpoints)
-    - [5.1 API-documentatie](#5-1-api-documentatie)
-    - [5.2 Overzicht van beschikbare resources](#5-2-overzicht-van-beschikbare-resources)
+  - [5.1 API-documentatie](#5-1-api-documentatie)
+  - [5.2 Overzicht van beschikbare resources](#5-2-overzicht-van-beschikbare-resources)
 
 
 ## 1. Projectomschrijving
@@ -484,10 +484,10 @@ Wanneer Keycloak voor de eerste keer wordt opgestart:
 2. Open de **Admin Console**.
 3. Links bovenin → Realm selector → klik op **Create realm**.
 4. In het scherm **Create realm**:
-    - Onder **Import from resource file** klik je op **Browse…**.
-    - Selecteer het bestand `WBJE_realm-export.json`.
-    - De realmnaam wordt automatisch ingevuld (of vul `WBJE` in wanneer dit niet gebeurt).
-    - Zorg dat de slider **Enabled** direct op **ON** gezet wordt.
+   - Onder **Import from resource file** klik je op **Browse…**.
+   - Selecteer het bestand `WBJE_realm-export.json`.
+   - De realmnaam wordt automatisch ingevuld (of vul `WBJE` in wanneer dit niet gebeurt).
+   - Zorg dat de slider **Enabled** direct op **ON** gezet wordt.
 5. Klik op **Create** om de realm aan te maken op basis van het geïmporteerde bestand.
 
 Na deze stappen is de volledige WBJE-securityconfiguratie (rollen, clients, realm-instellingen) actief en klaar voor gebruik.
@@ -506,9 +506,11 @@ Na deze stappen is de volledige WBJE-securityconfiguratie (rollen, clients, real
 #### Rollen (client-rollen)
 
 - **ROLE_ADMIN**
-    - Username: `Operator`
+  - Username: `Operator`
 - **ROLE_USER**
-    - Username: `Service`
+  - Username: `Service`
+
+Zie het hoofdstuk [Rollen en Autorisatie (RBAC)](#rollen-en-autorisatie-rbac) voor de bijbehorende credentials *(incl. wachtwoorden)* en een toelichting op de rolverdeling.
 
 #### Backend Client
 
@@ -575,9 +577,9 @@ Het project kan op meerdere manieren in IntelliJ IDEA worden geopend: rechtstree
 
 1. Open **IntelliJ IDEA**.
 2. Kies één van de volgende opties:
-    - **File → Open…** en selecteer de projectmap,
-    - **Git → Clone…** en vul de repository-URL in,
-    - **Git → GitHub → View Pull Requests** en kies **Checkout Pull Request**.
+   - **File → Open…** en selecteer de projectmap,
+   - **Git → Clone…** en vul de repository-URL in,
+   - **Git → GitHub → View Pull Requests** en kies **Checkout Pull Request**.
 3. IntelliJ herkent automatisch de `pom.xml` en importeert het Maven‑project.
 4. Wacht tot rechtsonder **“Maven project imported”** verschijnt.
 
@@ -595,8 +597,8 @@ Het project kan op meerdere manieren in IntelliJ IDEA worden geopend: rechtstree
 
 3. Start de applicatie via:
 
-    - **Right‑click → Run 'WbjeApplication'**, of
-    - De **groene Run‑knop**.
+   - **Right‑click → Run 'WbjeApplication'**, of
+   - De **groene Run‑knop**.
 
 4. Nadat de applicatie is gestart, is de API bereikbaar op:
 
@@ -776,7 +778,7 @@ Klik op:
 
 > **Run WBJE – Full Combined tests**
 >
-![SelectAllTestsAndPressRUNWBJE.png](src/main/java/nl/avflexologic/wbje/screenshots/SelectAllTestsAndPressRUNWBJE.png)
+> ![SelectAllTestsAndPressRUNWBJE.png](src/main/java/nl/avflexologic/wbje/screenshots/SelectAllTestsAndPressRUNWBJE.png)
 
 ------
 
@@ -847,6 +849,8 @@ De collectie bevat per request een OAuth2-configuratie met de volgende parameter
 7. Klik **Use Token**
 
 ---
+
+<a id="rollen-en-autorisatie-rbac"></a>
 
 ### Rollen & Autorisatie (RBAC)
 
